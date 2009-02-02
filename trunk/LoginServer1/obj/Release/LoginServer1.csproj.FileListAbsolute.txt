@@ -1,0 +1,6 @@
+C:\Documents and Settings\byna\Moje dokumenty\LoginServer1\bin\Release\TibiaAPI.dll
+C:\Documents and Settings\byna\Moje dokumenty\LoginServer1\bin\Release\LoginServer1.dll
+C:\Documents and Settings\byna\Moje dokumenty\LoginServer1\bin\Release\LoginServer1.pdb
+C:\Documents and Settings\byna\Moje dokumenty\LoginServer1\obj\Release\ResolveAssemblyReference.cache
+C:\Documents and Settings\byna\Moje dokumenty\LoginServer1\obj\Release\LoginServer1.dll
+C:\Documents and Settings\byna\Moje dokumenty\LoginServer1\obj\Release\LoginServer1.pdb
