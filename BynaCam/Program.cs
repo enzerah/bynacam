@@ -19,6 +19,49 @@ namespace BynaCam
         static int speed = 1;
         static StreamReader stream;
 
+        private static Client getIniClient()
+        {
+            IniFile inifile = new IniFile(System.Windows.Forms.Application.StartupPath + @"\config.ini");
+            if (File.Exists(inifile.IniReadValue("CLIENT", "Path")))
+            {
+                WinApi.PROCESS_INFORMATION pi = new Tibia.Util.WinApi.PROCESS_INFORMATION();
+                WinApi.STARTUPINFO si = new Tibia.Util.WinApi.STARTUPINFO();
+
+                WinApi.CreateProcess(inifile.IniReadValue("CLIENT", "Path"), "", IntPtr.Zero, IntPtr.Zero,
+                    false, WinApi.CREATE_SUSPENDED, IntPtr.Zero,
+                    System.IO.Path.GetDirectoryName(inifile.IniReadValue("CLIENT", "Path")), ref si, out pi);
+
+                IntPtr handle = WinApi.OpenProcess(WinApi.PROCESS_ALL_ACCESS, 0, pi.dwProcessId);
+                Process p = Process.GetProcessById(Convert.ToInt32(pi.dwProcessId));
+                Memory.WriteByte(handle, (long)Tibia.Addresses.Client.DMultiClient, Tibia.Addresses.Client.DMultiClientJMP);
+                WinApi.ResumeThread(pi.hThread);
+                p.WaitForInputIdle();
+                Memory.WriteByte(handle, (long)Tibia.Addresses.Client.DMultiClient, Tibia.Addresses.Client.DMultiClientJNZ);
+                WinApi.CloseHandle(handle);
+                WinApi.CloseHandle(pi.hProcess);
+                WinApi.CloseHandle(pi.hThread);
+                return new Client(p);
+            }
+            else
+            {
+                MessageBox.Show("Tibia Client not found! Choose new one..", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                OpenFileDialog tibiaDialog = new OpenFileDialog();
+                tibiaDialog.CheckFileExists = true;
+                tibiaDialog.CheckPathExists = true;
+                tibiaDialog.InitialDirectory = "C:\\Program Files\\Tibia\\";
+                tibiaDialog.Filter = "Exe files|*.exe";
+                tibiaDialog.Multiselect = false;
+
+                if (tibiaDialog.ShowDialog() == DialogResult.OK)
+                {
+                    inifile.IniWriteValue("CLIENT", "Path", tibiaDialog.FileName);
+                }
+            }
+
+            getIniClient();
+            return null;
+        }
+
         private static Stream getCamFileStream()
         {
             //Open File Dialog
@@ -90,13 +133,10 @@ namespace BynaCam
         static void Main(string[] args)
         {
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High;
-            
+
+            client = getIniClient();
             stream = new StreamReader(getCamFileStream());
-
-            ClientChooserOptions options = new ClientChooserOptions();
-            options.ShowOTOption = false;
-            client = ClientChooser.ShowBox(options);
-
+            
             if (client != null)
             {
                 TibiaNetwork Network = new TibiaNetwork(client);
@@ -161,6 +201,7 @@ namespace BynaCam
             }
             else
             {
+                MessageBox.Show("Could not load Tibia Client 8.4!");
                 Process.GetCurrentProcess().Kill();
             }
         }
