@@ -15,16 +15,59 @@ using System.Diagnostics;
 
 namespace BynaCam_Recorder
 {
-    public partial class Form1 : Form
+    public partial class mainFrm : Form
     {
         StreamWriter file;
         Client c;
         Stopwatch w = new Stopwatch();
         TimeSpan time;
 
-        public Form1()
+        public mainFrm()
         {
             InitializeComponent();
+        }
+
+        private Client getIniClient()
+        {
+            IniFile inifile = new IniFile(System.Windows.Forms.Application.StartupPath + @"\config.ini");
+            if (File.Exists(inifile.IniReadValue("CLIENT", "Path")))
+            {
+                WinApi.PROCESS_INFORMATION pi = new Tibia.Util.WinApi.PROCESS_INFORMATION();
+                WinApi.STARTUPINFO si = new Tibia.Util.WinApi.STARTUPINFO();
+
+                WinApi.CreateProcess(inifile.IniReadValue("CLIENT", "Path"), "", IntPtr.Zero, IntPtr.Zero,
+                    false, WinApi.CREATE_SUSPENDED, IntPtr.Zero,
+                    System.IO.Path.GetDirectoryName(inifile.IniReadValue("CLIENT", "Path")), ref si, out pi);
+
+                IntPtr handle = WinApi.OpenProcess(WinApi.PROCESS_ALL_ACCESS, 0, pi.dwProcessId);
+                Process p = Process.GetProcessById(Convert.ToInt32(pi.dwProcessId));
+                Memory.WriteByte(handle, (long)Tibia.Addresses.Client.DMultiClient, Tibia.Addresses.Client.DMultiClientJMP);
+                WinApi.ResumeThread(pi.hThread);
+                p.WaitForInputIdle();
+                Memory.WriteByte(handle, (long)Tibia.Addresses.Client.DMultiClient, Tibia.Addresses.Client.DMultiClientJNZ);
+                WinApi.CloseHandle(handle);
+                WinApi.CloseHandle(pi.hProcess);
+                WinApi.CloseHandle(pi.hThread);
+                return new Client(p);
+            }
+            else
+            {
+                MessageBox.Show("Tibia Client not found! Choose new one..", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                OpenFileDialog tibiaDialog = new OpenFileDialog();
+                tibiaDialog.CheckFileExists = true;
+                tibiaDialog.CheckPathExists = true;
+                tibiaDialog.InitialDirectory = "C:\\Program Files\\Tibia\\";
+                tibiaDialog.Filter = "Exe files|*.exe";
+                tibiaDialog.Multiselect = false;
+
+                if (tibiaDialog.ShowDialog() == DialogResult.OK)
+                {
+                    inifile.IniWriteValue("CLIENT", "Path", tibiaDialog.FileName);
+                }
+            }
+
+            getIniClient();
+            return null;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -32,12 +75,13 @@ namespace BynaCam_Recorder
             ClientChooserOptions op = new ClientChooserOptions();
             op.ShowOTOption = false;
 
-            c = ClientChooser.ShowBox();
+            c = getIniClient();
             SaveFileDialog dialog = new SaveFileDialog();
             dialog.Filter = "BynaCam files|*.byn";
 
             if (dialog.ShowDialog() == DialogResult.Cancel)
             {
+                this.Activate();
                     MessageBox.Show(null, "You must choose file to save!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     notifyIcon1.Visible = false;
                     Process.GetCurrentProcess().Kill();
