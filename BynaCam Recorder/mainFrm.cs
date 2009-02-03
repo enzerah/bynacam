@@ -60,7 +60,7 @@ namespace BynaCam_Recorder
                 tibiaDialog.Filter = "Exe files|*.exe";
                 tibiaDialog.Multiselect = false;
 
-                if (tibiaDialog.ShowDialog(new WindowWrapper(c.MainWindowHandle)) == DialogResult.OK)
+                if (tibiaDialog.ShowDialog() == DialogResult.OK)
                 {
                     inifile.IniWriteValue("CLIENT", "Path", tibiaDialog.FileName);
                 }
