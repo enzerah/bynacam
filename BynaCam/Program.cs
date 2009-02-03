@@ -52,14 +52,13 @@ namespace BynaCam
                 tibiaDialog.Filter = "Exe files|*.exe";
                 tibiaDialog.Multiselect = false;
 
-                if (tibiaDialog.ShowDialog() == DialogResult.OK)
+                if (tibiaDialog.ShowDialog(new WindowWrapper(client.MainWindowHandle)) == DialogResult.OK)
                 {
                     inifile.IniWriteValue("CLIENT", "Path", tibiaDialog.FileName);
                 }
             }
 
-            getIniClient();
-            return null;
+            return getIniClient();
         }
 
         private static Stream getCamFileStream()
@@ -70,7 +69,7 @@ namespace BynaCam
             dialog.Multiselect = false;
             dialog.Filter = "BynaCam Files|*.byn";
             dialog.Title = "Open BynaCam file.";
-            if (dialog.ShowDialog() == DialogResult.Cancel)
+            if (dialog.ShowDialog(new WindowWrapper(client.MainWindowHandle)) == DialogResult.Cancel)
             {
                 MessageBox.Show("Cannot open BynaCam file!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Process.GetCurrentProcess().Kill();
@@ -139,6 +138,14 @@ namespace BynaCam
             
             if (client != null)
             {
+                string TibiaVersion = stream.ReadLine();
+                if (TibiaVersion != client.Version)
+                {
+                    MessageBox.Show("This movie don't support your Tibia Client!");
+                    client.Process.Kill();
+                    Process.GetCurrentProcess().Kill();
+                }
+
                 TibiaNetwork Network = new TibiaNetwork(client);
                 updateClientTitle();
                 client.Exited += new EventHandler(client_Exited);
@@ -201,7 +208,7 @@ namespace BynaCam
             }
             else
             {
-                MessageBox.Show("Could not load Tibia Client 8.4!");
+                MessageBox.Show("Could not load Tibia Client!");
                 Process.GetCurrentProcess().Kill();
             }
         }
@@ -210,5 +217,20 @@ namespace BynaCam
         {
             Process.GetCurrentProcess().Kill();
         }
+    }
+
+    public class WindowWrapper : System.Windows.Forms.IWin32Window
+    {
+        public WindowWrapper(IntPtr handle)
+        {
+            _hwnd = handle;
+        }
+
+        public IntPtr Handle
+        {
+            get { return _hwnd; }
+        }
+
+        private IntPtr _hwnd;
     }
 }
