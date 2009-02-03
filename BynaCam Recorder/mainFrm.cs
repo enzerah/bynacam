@@ -60,26 +60,23 @@ namespace BynaCam_Recorder
                 tibiaDialog.Filter = "Exe files|*.exe";
                 tibiaDialog.Multiselect = false;
 
-                if (tibiaDialog.ShowDialog() == DialogResult.OK)
+                if (tibiaDialog.ShowDialog(new WindowWrapper(c.MainWindowHandle)) == DialogResult.OK)
                 {
                     inifile.IniWriteValue("CLIENT", "Path", tibiaDialog.FileName);
                 }
             }
 
-            getIniClient();
-            return null;
+            return getIniClient();
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            ClientChooserOptions op = new ClientChooserOptions();
-            op.ShowOTOption = false;
-
             c = getIniClient();
+            System.Threading.Thread.Sleep(1000);
             SaveFileDialog dialog = new SaveFileDialog();
             dialog.Filter = "BynaCam files|*.byn";
 
-            if (dialog.ShowDialog() == DialogResult.Cancel)
+            if (dialog.ShowDialog(new WindowWrapper(c.MainWindowHandle))  == DialogResult.Cancel)
             {
                 this.Activate();
                     MessageBox.Show(null, "You must choose file to save!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -141,6 +138,11 @@ namespace BynaCam_Recorder
 
             if (!w.IsRunning)
             {
+                BeginInvoke(new Action(delegate()
+                {
+                    file.WriteLine(c.Version);
+                    file.Flush();
+                }));
                 BeginInvoke(new Action(delegate() { this.Hide(); }));
                 notifyIcon1.ShowBalloonTip(5000, "BynaCam", "BynaCam is recording...", ToolTipIcon.Info);
                 w.Start();
@@ -175,5 +177,20 @@ namespace BynaCam_Recorder
             notifyIcon1.Visible = false;
             Process.GetCurrentProcess().Kill();
         }
+    }
+
+    public class WindowWrapper : System.Windows.Forms.IWin32Window
+    {
+        public WindowWrapper(IntPtr handle)
+        {
+            _hwnd = handle;
+        }
+
+        public IntPtr Handle
+        {
+            get { return _hwnd; }
+        }
+
+        private IntPtr _hwnd;
     }
 }
