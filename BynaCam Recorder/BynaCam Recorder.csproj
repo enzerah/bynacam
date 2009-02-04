@@ -50,7 +50,7 @@
     <Reference Include="TibiaAPI, Version=2.5.1.0, Culture=neutral, processorArchitecture=MSIL" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Config.cs" />
+    <Compile Include="IniConfig.cs" />
     <Compile Include="mainFrm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -80,6 +80,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="WindowWrapper.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="cat.ico" />
