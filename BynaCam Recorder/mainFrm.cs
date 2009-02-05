@@ -21,8 +21,7 @@ namespace BynaCam_Recorder
         Client c;
         Stopwatch w = new Stopwatch();
         Queue<CapturedPacket> PacketQueue = new Queue<CapturedPacket>();
-        bool serverFirstMsg = true;
-        TimeSpan time;
+        TimeSpan time = TimeSpan.Zero;
 
         public mainFrm()
         {
@@ -83,8 +82,7 @@ namespace BynaCam_Recorder
                     pack.Position = Tibia.Objects.Location.Invalid;
                     pack.Time = 0;
                     
-                    LogPacket(pack.ToByteArray(), w.Elapsed - time);
-                    time = w.Elapsed;
+                    LogPacket(pack.ToByteArray());
                 }));
             }
 
@@ -95,42 +93,30 @@ namespace BynaCam_Recorder
         {           
             if (!w.IsRunning)
             {
-                ProcessWritePackets();
                 BeginInvoke(new Action(delegate() { this.Hide(); }));
                 notifyIcon1.ShowBalloonTip(5000, "BynaCam", "BynaCam is recording...", ToolTipIcon.Info);
                 w.Start();
             }
 
-            LogPacket(data, w.Elapsed - time);
-            time = w.Elapsed;
+            LogPacket(data);
         }
 
-        private void LogPacket(byte[] data, TimeSpan time)
+        private void LogPacket(byte[] data)
         {
-            PacketQueue.Enqueue(new CapturedPacket(time, data));
+            PacketQueue.Enqueue(new CapturedPacket(w.Elapsed - time, data));
+            time = w.Elapsed;
+            ProcessWritePackets();
         }
 
         private void ProcessWritePackets()
         {
-            new System.Threading.Thread(new System.Threading.ThreadStart(delegate()
-                {
-                    while (true)
-                    {
-                        if (serverFirstMsg)
-                        {
-                            file.WriteLine(c.Version);
-                            serverFirstMsg = false;
-                        }
-                        while (PacketQueue.Count > 0)
-                        {
-                            CapturedPacket packet = PacketQueue.Dequeue();
+            CapturedPacket packet = PacketQueue.Dequeue();
+                   BeginInvoke(new Action(delegate()
+                        {  
                             file.WriteLine(packet.Time);
                             file.WriteLine(packet.Packet.ToHexString());
                             file.Flush();
-                        }
-                        System.Threading.Thread.Sleep(100);
-                    }
-                })).Start();
+                        }));
         }
 
         private void saveAndExitToolStripMenuItem_Click(object sender, EventArgs e)

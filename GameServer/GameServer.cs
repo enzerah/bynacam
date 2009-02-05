@@ -46,7 +46,7 @@ namespace GameServer
                 msg.AddBytes(packet);
                 msg.UpdateLogicalPacketHeader();
                 msg.PrepareToSend();
-                stream.Write(msg.Packet, 0, msg.Packet.Length);
+                stream.BeginWrite(msg.Packet, 0, msg.Packet.Length, null, null);
             }
         }
 }
