@@ -49,9 +49,15 @@ namespace BynaCam
                 
                 TibiaNetwork network = new TibiaNetwork(client);
                 PacketReader reader = new PacketReader(client, network, camfilepath);
-
                 client.AutoLogin("", "", "Byna", "BynaCam");
-                try { while (!network.uxGameServer.Accepted) { Thread.Sleep(100); } }
+                
+                try 
+                { 
+                    while (!network.uxGameServer.Accepted) 
+                    {
+                        Thread.Sleep(100);
+                    } 
+                }
                 catch { Process.GetCurrentProcess().Kill(); }
                 
                 reader.ReadAllPackets();

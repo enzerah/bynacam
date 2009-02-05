@@ -27,6 +27,8 @@ namespace BynaCam_Recorder
         {
             InitializeComponent();
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High;
+            Tibia.Util.Timer tmr = new Tibia.Util.Timer(500, true);
+            tmr.Execute += new Tibia.Util.Timer.TimerExecution(ProcessWritePackets);
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -105,24 +107,27 @@ namespace BynaCam_Recorder
         {
             PacketQueue.Enqueue(new CapturedPacket(w.Elapsed - time, data));
             time = w.Elapsed;
-            ProcessWritePackets();
         }
 
         private void ProcessWritePackets()
         {
-            CapturedPacket packet = PacketQueue.Dequeue();
-            try
+            while (PacketQueue.Count > 0)
             {
-                packet.Packet.ToHexString();
-            }
-            catch { return; }
+                   CapturedPacket packet = PacketQueue.Dequeue();
+                    try
+                    {
+                        packet.Packet.ToHexString();
+                    }
+                    catch { return; }
 
-                   Invoke(new Action(delegate()
-                        {  
+                    BeginInvoke(new Action(delegate()
+                        {
                             file.WriteLine(packet.Time);
                             file.WriteLine(packet.Packet.ToHexString());
                             file.Flush();
                         }));
+            }
+            
         }
 
         private void saveAndExitToolStripMenuItem_Click(object sender, EventArgs e)
