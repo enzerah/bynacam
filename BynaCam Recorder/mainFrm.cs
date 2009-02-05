@@ -111,6 +111,12 @@ namespace BynaCam_Recorder
         private void ProcessWritePackets()
         {
             CapturedPacket packet = PacketQueue.Dequeue();
+            try
+            {
+                packet.Packet.ToHexString();
+            }
+            catch { return; }
+
                    BeginInvoke(new Action(delegate()
                         {  
                             file.WriteLine(packet.Time);
