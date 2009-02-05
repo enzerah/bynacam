@@ -12,6 +12,7 @@ using Tibia;
 using Tibia.Packets;
 using Tibia.Util;
 using System.Diagnostics;
+using System.IO.Compression;
 
 namespace BynaCam_Recorder
 {
@@ -47,7 +48,7 @@ namespace BynaCam_Recorder
                     catch { }
             }
 
-            file = new StreamWriter(File.Create(dialog.FileName));
+            file = new StreamWriter(new DeflateStream(File.Create(dialog.FileName), CompressionMode.Compress));
             
             if (c != null)
             {
@@ -95,6 +96,7 @@ namespace BynaCam_Recorder
         {           
             if (!w.IsRunning)
             {
+                file.WriteLine(c.Version);
                 BeginInvoke(new Action(delegate() { this.Hide(); }));
                 notifyIcon1.ShowBalloonTip(5000, "BynaCam", "BynaCam is recording...", ToolTipIcon.Info);
                 w.Start();
