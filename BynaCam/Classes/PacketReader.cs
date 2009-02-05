@@ -53,7 +53,12 @@ namespace BynaCam
                     if (packet[0] == 0xc8 //setoufit block
                         || packet[0] == (byte)IncomingPacketType.ChannelList ////channellist block
                         || packet[0] == 0x96 //textwindow block
-                        || packet[0] == 0x14) //disconnectclient
+                        || packet[0] == 0x14 //disconnectclient
+                        || packet[0] == (byte)IncomingPacketType.HouseTextWindow
+                        || packet[0] == (byte)IncomingPacketType.ItemTextWindow
+                        || packet[0] == (byte)IncomingPacketType.RuleViolationOpen
+                        || packet[0] == (byte)IncomingPacketType.ShopWindowOpen
+                        || packet[0] == (byte)IncomingPacketType.ShowTutorial)
                         continue;
 
                     if (packet[0] == 0x65 || packet[0] == 0x66 || packet[0] == 0x67 || packet[0] == 0x68
