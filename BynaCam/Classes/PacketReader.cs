@@ -39,8 +39,6 @@ namespace BynaCam
         {
             new Thread(new ThreadStart(delegate()
             {
-                movieVer = stream.ReadLine();
-
                 TimeSpan delay;
                 byte[] packet;
 
