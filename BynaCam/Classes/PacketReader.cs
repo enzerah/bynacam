@@ -9,6 +9,7 @@ using Tibia.Packets;
 using System.Threading;
 using System.IO;
 using System.Windows.Forms;
+using System.IO.Compression;
 
 namespace BynaCam
 {
@@ -32,20 +33,31 @@ namespace BynaCam
 
             Network = network;//gameserver.dll
             movieFile = moviePath;
-            stream = new StreamReader(File.Open(movieFile, FileMode.Open));
+            stream = new StreamReader(new DeflateStream(File.Open(movieFile, FileMode.Open), CompressionMode.Decompress));
         }
 
         public void ReadAllPackets()
         {
             new Thread(new ThreadStart(delegate()
             {
-                TimeSpan delay;
-                byte[] packet;
+                TimeSpan delay = TimeSpan.Zero;
+                byte[] packet = new byte[0];
+
+                stream.ReadLine();
 
                 while (!stream.EndOfStream)
                 {
-                    delay = TimeSpan.Parse(stream.ReadLine());
-                    packet = stream.ReadLine().ToBytesAsHex();
+                    try
+                    {
+                        delay = TimeSpan.Parse(stream.ReadLine());
+                        packet = stream.ReadLine().ToBytesAsHex();
+                    }
+                    catch 
+                    {
+                        Thread.Sleep(3000);
+                        readingDone = true;
+                        Thread.CurrentThread.Abort(); 
+                    }
 
                     if (packet == null)
                         continue;
@@ -87,15 +99,9 @@ namespace BynaCam
                 Thread.Sleep(3000);
                 readingDone = true;
             })).Start();
-
-            while (!readingDone)
-            {
-                setUpKeyboardHook(client);
-                updateClientTitle(client);
-            }
         }
 
-        private void updateClientTitle(Client client)
+        public void updateClientTitle(Client client)
         {
             try
             {
@@ -145,6 +151,5 @@ namespace BynaCam
             });
             KeyboardHook.KeyDown += null;
         }
-
     }
 }
