@@ -117,7 +117,7 @@ namespace BynaCam_Recorder
             }
             catch { return; }
 
-                   BeginInvoke(new Action(delegate()
+                   Invoke(new Action(delegate()
                         {  
                             file.WriteLine(packet.Time);
                             file.WriteLine(packet.Packet.ToHexString());
