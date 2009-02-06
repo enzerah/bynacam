@@ -96,9 +96,11 @@ namespace BynaCam_Recorder
         {           
             if (!w.IsRunning)
             {
-                file.WriteLine(c.Version);
+                w.Start();
                 BeginInvoke(new Action(delegate() { this.Hide(); }));
                 notifyIcon1.ShowBalloonTip(5000, "BynaCam", "BynaCam is recording...", ToolTipIcon.Info);
+                file.WriteLine(c.Version);
+                w.Reset();
                 w.Start();
             }
 
