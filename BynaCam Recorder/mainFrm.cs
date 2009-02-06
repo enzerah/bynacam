@@ -136,6 +136,7 @@ namespace BynaCam_Recorder
 
         private void saveAndExitToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            file.Close();
             notifyIcon1.Visible = false;
             c.Process.Kill();
             Process.GetCurrentProcess().Kill();
@@ -143,6 +144,7 @@ namespace BynaCam_Recorder
 
         private void c_Exited(object sender, EventArgs e)
         {
+            file.Close();
             notifyIcon1.Visible = false;
             Process.GetCurrentProcess().Kill();
         }
