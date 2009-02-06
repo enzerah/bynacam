@@ -105,7 +105,7 @@ namespace BynaCam
         {
             try
             {
-                client.Title = "BynaCam -> speed: x" + speed;
+                client.Title = "BynaCam -> Speed: x" + speed;
             }
             catch { }
         }
