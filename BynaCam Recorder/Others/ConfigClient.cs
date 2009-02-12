@@ -12,11 +12,8 @@ using System.Windows.Forms;
 
 namespace BynaCam_Recorder
 {
-    public static class IniClient
+    public static class ConfigClient
     {
-        [DllImport("user32.dll")]
-        static extern IntPtr GetForegroundWindow();
-
         public static Client getIniClient()
         {
             IniFile inifile = new IniFile(System.Windows.Forms.Application.StartupPath + @"\config.ini");
@@ -42,7 +39,8 @@ namespace BynaCam_Recorder
             }
             else
             {
-                MessageBox.Show(new WindowWrapper(GetForegroundWindow()), "Tibia Client not found! Choose new one..", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                DialogResult res = Messages.OKCancel("Tibia Client not found! Choose new one..", "Information!", MessageBoxButtons.OKCancel);
+                if (res == DialogResult.Cancel) Process.GetCurrentProcess().Kill();
                 OpenFileDialog tibiaDialog = new OpenFileDialog();
                 tibiaDialog.CheckFileExists = true;
                 tibiaDialog.CheckPathExists = true;
@@ -50,11 +48,11 @@ namespace BynaCam_Recorder
                 tibiaDialog.Filter = "Exe files|*.exe";
                 tibiaDialog.Multiselect = false;
 
-                if (tibiaDialog.ShowDialog(new WindowWrapper(GetForegroundWindow())) == DialogResult.OK)
+                if (tibiaDialog.ShowDialog(new WindowWrapper(Messages.GetForegroundWindow())) == DialogResult.OK)
                 {
                     if (FileVersionInfo.GetVersionInfo(tibiaDialog.FileName).FileVersion != "8.40")
                     {
-                        MessageBox.Show("Only Tibia Client 8.4 allowed!!");
+                        Messages.Error("Only Tibia Client 8.4 allowed!!");
                         Process.GetCurrentProcess().Kill();
                     }
                     inifile.IniWriteValue("CLIENT", "Path", tibiaDialog.FileName);

@@ -1,0 +1,9 @@
+    /*
+     * File struct:
+     * [header]
+     * 1 - Tibia Version
+     * 2 - Total playing time
+     * 
+     * [rest file]
+     *   DELAY AND/OR TRUE PACKET (compressed by deflate)
+     */
