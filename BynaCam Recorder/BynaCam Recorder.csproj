@@ -50,14 +50,19 @@
     <Reference Include="TibiaAPI, Version=2.5.1.0, Culture=neutral, processorArchitecture=MSIL" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IniConfig.cs" />
+    <Compile Include="Classes\FileHandler.cs" />
+    <Compile Include="Classes\PacketHandler.cs" />
+    <Compile Include="Classes\PacketQueue.cs" />
+    <Compile Include="Classes\Version.cs" />
+    <Compile Include="Others\ConfigClient.cs" />
     <Compile Include="mainFrm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="mainFrm.Designer.cs">
       <DependentUpon>mainFrm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Program.cs" />
+    <Compile Include="Others\FileChooser.cs" />
+    <Compile Include="Others\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="mainFrm.resx">
       <DependentUpon>mainFrm.cs</DependentUpon>
@@ -80,7 +85,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="WindowWrapper.cs" />
+    <Compile Include="Others\WindowWrapper.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="cat.ico" />

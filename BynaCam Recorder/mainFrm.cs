@@ -13,50 +13,35 @@ using Tibia.Packets;
 using Tibia.Util;
 using System.Diagnostics;
 using System.IO.Compression;
+using BynaCam_Recorder.Classes;
 
 namespace BynaCam_Recorder
 {
     public partial class mainFrm : Form
     {
-        StreamWriter file;
         Client c;
-        Stopwatch w = new Stopwatch();
-        Queue<CapturedPacket> PacketQueue = new Queue<CapturedPacket>();
-        TimeSpan time = TimeSpan.Zero;
+        FileHandler fileHandler;
+        PacketHandler packetHandler;
 
         public mainFrm()
         {
             InitializeComponent();
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High;
-            Tibia.Util.Timer tmr = new Tibia.Util.Timer(500, true);
-            tmr.Execute += new Tibia.Util.Timer.TimerExecution(ProcessWritePackets);
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            c = IniClient.getIniClient();
-            SaveFileDialog dialog = new SaveFileDialog();
-            dialog.Filter = "BynaCam files|*.byn";
-
-            if (dialog.ShowDialog(new WindowWrapper(c.MainWindowHandle))  == DialogResult.Cancel)
-            {
-                this.Activate();
-                    MessageBox.Show(null, "You must choose file to save!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    notifyIcon1.Visible = false;
-                    Process.GetCurrentProcess().Kill();
-                    try { c.Process.Kill(); }
-                    catch { }
-            }
-
-            file = new StreamWriter(new DeflateStream(File.Create(dialog.FileName), CompressionMode.Compress));
+            c = ConfigClient.getIniClient();
+            fileHandler = new FileHandler();
+            fileHandler.Open(FileChooser.getBynaCamFile(c));
             
             if (c != null)
             {
                 notifyIcon1.ShowBalloonTip(5000, "BynaCam", "BynaCam is waiting for login...", ToolTipIcon.Info);
+                packetHandler = new PacketHandler(c);
+                ProcessWritePackets();
                 c.Exited += new EventHandler(c_Exited);
-                c.StartProxy();
-                c.Proxy.IncomingSplitPacket += new SocketBase.SplitPacket(Proxy_IncomingSplitPacket);
-                c.Proxy.ReceivedPlayerSpeechOutgoingPacket += new SocketBase.OutgoingPacketListener(Proxy_ReceivedPlayerSpeechOutgoingPacket);
+                c.Proxy.PlayerLogin += new EventHandler(Proxy_PlayerLogin);
             }
             else
             {
@@ -66,77 +51,31 @@ namespace BynaCam_Recorder
             }
          }
 
-        private bool Proxy_ReceivedPlayerSpeechOutgoingPacket(OutgoingPacket packet)
+        public void ProcessWritePackets()
         {
-            Tibia.Packets.Outgoing.PlayerSpeechPacket p = (Tibia.Packets.Outgoing.PlayerSpeechPacket)packet;
-
-            if (p.SpeechType == SpeechType.Private)
+            Tibia.Util.Timer timer = new Tibia.Util.Timer(100, true);
+            timer.Execute += new Tibia.Util.Timer.TimerExecution(new Action(delegate()
             {
-                BeginInvoke(new Action(delegate()
+                lock (timer)
                 {
-                    //(c, p.Receiver, 0, ">> " + p.Message, SpeechType.Private, p.ChannelId);
-
-                    Tibia.Packets.Incoming.CreatureSpeechPacket pack = new Tibia.Packets.Incoming.CreatureSpeechPacket(c);
-                    pack.SenderName = p.Receiver;
-                    pack.SenderLevel = 0;
-                    pack.Message = ">> " + p.Message;
-                    pack.SpeechType = p.SpeechType;
-                    pack.ChannelId = p.ChannelId;
-                    pack.Position = Tibia.Objects.Location.Invalid;
-                    pack.Time = 0;
-                    
-                    LogPacket(pack.ToByteArray());
-                }));
-            }
-
-            return true;
-        }
-
-        private void Proxy_IncomingSplitPacket(byte type, byte[] data)
-        {           
-            if (!w.IsRunning)
-            {
-                w.Start();
-                BeginInvoke(new Action(delegate() { this.Hide(); }));
-                notifyIcon1.ShowBalloonTip(5000, "BynaCam", "BynaCam is recording...", ToolTipIcon.Info);
-                file.WriteLine(c.Version);
-                w.Reset();
-                w.Start();
-            }
-
-            LogPacket(data);
-        }
-
-        private void LogPacket(byte[] data)
-        {
-            PacketQueue.Enqueue(new CapturedPacket(w.Elapsed - time, data));
-            time = w.Elapsed;
-        }
-
-        private void ProcessWritePackets()
-        {
-            while (PacketQueue.Count > 0)
-            {
-                   CapturedPacket packet = PacketQueue.Dequeue();
-                    try
+                    while (PacketQueue.PacketQ.Count > 0)
                     {
-                        packet.Packet.ToHexString();
+                        CapturedPacket packet = PacketQueue.PacketQ.Dequeue();
+                        fileHandler.WriteHeader(PacketQueue.allTime.Elapsed);
+                        fileHandler.WriteDelay(packet.Time);
+                        fileHandler.WriteTruePacket(packet.Packet);
+                        fileHandler.fileStream.Flush();
                     }
-                    catch { return; }
-
-                    BeginInvoke(new Action(delegate()
-                        {
-                            file.WriteLine(packet.Time);
-                            file.WriteLine(packet.Packet.ToHexString());
-                            file.Flush();
-                        }));
-            }
-            
+                }
+            }));
+         
         }
 
         private void saveAndExitToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            file.Close();
+            fileHandler.WriteHeader(PacketQueue.allTime.Elapsed);
+            fileHandler.deflateStream.Close();
+            fileHandler.fileStream.Close();
             notifyIcon1.Visible = false;
             c.Process.Kill();
             Process.GetCurrentProcess().Kill();
@@ -144,36 +83,17 @@ namespace BynaCam_Recorder
 
         private void c_Exited(object sender, EventArgs e)
         {
-            file.Close();
+            fileHandler.WriteHeader(PacketQueue.allTime.Elapsed);
+            fileHandler.deflateStream.Close();
+            fileHandler.fileStream.Close();
             notifyIcon1.Visible = false;
             Process.GetCurrentProcess().Kill();
         }
-    }
 
-    public class WindowWrapper : System.Windows.Forms.IWin32Window
-    {
-        public WindowWrapper(IntPtr handle)
+        private void Proxy_PlayerLogin(object sender, EventArgs e)
         {
-            _hwnd = handle;
-        }
-
-        public IntPtr Handle
-        {
-            get { return _hwnd; }
-        }
-
-        private IntPtr _hwnd;
-    }
-
-    public struct CapturedPacket
-    {
-        public TimeSpan Time;
-        public byte[] Packet;
-
-        public CapturedPacket(TimeSpan time, byte[] data)
-        {
-            Time = time;
-            Packet = data;
+            notifyIcon1.ShowBalloonTip(2000, "BynaCam", "BynaCam is recording...", ToolTipIcon.Info);
+            this.Hide();
         }
     }
 }
