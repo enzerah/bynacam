@@ -21,13 +21,17 @@ namespace BynaCam
         DeflateStream defStream;
         TibiaNetwork Network;
         string movieFile;
+        public double speed = 1.0;
         public bool readingDone = false;
 
         TimeSpan packetDelay = TimeSpan.Zero;
         byte[] truePacket = new byte[0];
 
-        public string TibiaVer = string.Empty;
+        string TibiaVer = string.Empty;
         public TimeSpan movieTime = TimeSpan.Zero;
+        public TimeSpan actualTime = TimeSpan.Zero;
+
+        #region Constructor
 
         public PacketReader(Client c, TibiaNetwork network, string moviePath)
         {
@@ -39,15 +43,28 @@ namespace BynaCam
 
             Network = network;//gameserver.dll
             movieFile = moviePath;
-            stream = new FileStream(movieFile, FileMode.Open);
-            defStream = new DeflateStream(stream, CompressionMode.Decompress);
+            try
+            {
+                stream = new FileStream(movieFile, FileMode.Open);
+                defStream = new DeflateStream(stream, CompressionMode.Decompress);
+            }
+            catch 
+            { 
+                Messages.Error("Could not read file!");
+                try { c.Process.Kill(); }
+                catch { }
+                Process.GetCurrentProcess().Kill(); 
+            }
         }
 
+        #endregion
+
+        #region getHeader / getPacket
         private bool getHeader()
         {
             byte[] buffer = new byte[2];
             ushort len;
-
+            
             try
             {
                 //Tibia Version
@@ -68,7 +85,7 @@ namespace BynaCam
             return true;
         }
 
-        private bool parsePacketFromFile()
+        private bool getPacket()
         {
             byte[] buffer = new byte[2];
             ushort len;
@@ -89,16 +106,19 @@ namespace BynaCam
             }
             catch { return false; }
         }
+        #endregion
 
-        private void sendPacketToServer(byte[] packet, TimeSpan delay)
+        #region sendPacket
+        private void sendPacket(byte[] packet, TimeSpan delay)
         {
-            Thread.Sleep(packetDelay);
+            Thread.Sleep((int)(packetDelay.TotalMilliseconds / speed));
             try
             {
                 Network.uxGameServer.Send(truePacket);
             }
             catch { readingDone = true; }
         }
+        #endregion
 
         public void ReadAllPackets()
         {
@@ -106,9 +126,17 @@ namespace BynaCam
             {
                 getHeader();
 
+                if (TibiaVer != client.Version)
+                {
+                    Messages.Error("Tibia Version does not match to this BynaCam Version!");
+                    try { client.Process.Kill(); }
+                    catch { }
+                    Process.GetCurrentProcess().Kill(); 
+                }
+
                 while (defStream.CanRead)
                 {
-                    if (!parsePacketFromFile())
+                    if (!getPacket())
                     {
                         readingDone = true;
                         return;
@@ -134,7 +162,7 @@ namespace BynaCam
                         || truePacket[0] == (byte)IncomingPacketType.ShowTutorial)
                         return;
 
-                    sendPacketToServer(truePacket, packetDelay);
+                    sendPacket(truePacket, packetDelay);
                 }
                 readingDone = true;
                 })).Start();
