@@ -45,6 +45,7 @@ namespace BynaCam
             
             if (client != null)
             {
+                client.Exited += new EventHandler(client_Exited);
                 string camfilepath = getCamFilePath();
                 
                 TibiaNetwork network = new TibiaNetwork(client);
