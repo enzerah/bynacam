@@ -17,39 +17,23 @@ namespace BynaCam
     {
         static Client client;
 
-        private static string getCamFilePath()
-        {
-            //Open File Dialog
-            OpenFileDialog dialog = new OpenFileDialog();
-            dialog.CheckFileExists = true;
-            dialog.Multiselect = false;
-            dialog.Filter = "BynaCam Files|*.byn";
-            dialog.Title = "Open BynaCam file.";
-            if (dialog.ShowDialog(new WindowWrapper(client.MainWindowHandle)) == DialogResult.Cancel)
-            {
-                MessageBox.Show(new WindowWrapper(client.MainWindowHandle), "Cannot open BynaCam file!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                client.Process.Kill();
-                Process.GetCurrentProcess().Kill();
-            }
-            if (!File.Exists(dialog.FileName))
-                return null;
-
-            return dialog.FileName;
-        }
-
         [STAThreadAttribute]
         static void Main(string[] args)
         {
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High;
-            client = IniClient.getIniClient();
+            client = ConfigClient.getIniClient();
             
             if (client != null)
             {
+                if (!KeyboardHook.Enable())
+                    Messages.Error("Could not read DI keyboard!");
+
                 client.Exited += new EventHandler(client_Exited);
-                string camfilepath = getCamFilePath();
+                string camfilepath = FileChooser.getCamFilePath(client);
                 
                 TibiaNetwork network = new TibiaNetwork(client);
                 PacketReader reader = new PacketReader(client, network, camfilepath);
+                new KeyHook().setUpKeyboardHook(client, reader);
                 Thread.Sleep(500);
                 client.AutoLogin("1", "1", "Byna", "BynaCam");
                 
@@ -63,9 +47,10 @@ namespace BynaCam
                 catch { Process.GetCurrentProcess().Kill(); }
                 
                 reader.ReadAllPackets();
-
+               
                 while (!reader.readingDone)
                 {
+                    TibiaClient.updateTitle(client, reader.speed, reader.actualTime, reader.movieTime);
                     Thread.Sleep(100);
                 }
             }
