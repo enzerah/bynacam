@@ -64,7 +64,7 @@ namespace BynaCam_Recorder
                         fileHandler.WriteHeader(PacketQueue.allTime.Elapsed);
                         fileHandler.WriteDelay(packet.Time);
                         fileHandler.WriteTruePacket(packet.Packet);
-                        fileHandler.fileStream.Flush();
+                        fileHandler.deflateStream.Flush();
                     }
                 }
             }));
@@ -92,7 +92,7 @@ namespace BynaCam_Recorder
 
         private void Proxy_PlayerLogin(object sender, EventArgs e)
         {
-            notifyIcon1.ShowBalloonTip(2000, "BynaCam", "BynaCam is recording...", ToolTipIcon.Info);
+            notifyIcon1.ShowBalloonTip(2000, "BynaCam", "BynaCam is recording!\r\nTo stop recording just exit your Tibia Client!", ToolTipIcon.Info);
             this.Hide();
         }
     }

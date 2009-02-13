@@ -48,7 +48,6 @@ namespace BynaCam_Recorder.Classes
         public void WriteTruePacket(byte[] packet)
         {
             List<byte> temp = new List<byte>();
-            temp.Add((byte)PacketType.PACKET);
             temp.AddRange(BitConverter.GetBytes((ushort)packet.Length));
             temp.AddRange(packet);
             deflateStream.Write(temp.ToArray(), 0, temp.Count);
@@ -60,7 +59,6 @@ namespace BynaCam_Recorder.Classes
             //playtime
             List<byte> temp = new List<byte>();
             byte[] delaytime = System.Text.ASCIIEncoding.ASCII.GetBytes(delay.ToString());
-            temp.Add((byte)PacketType.DELAY);
             temp.AddRange(BitConverter.GetBytes((ushort)delaytime.Length));
             temp.AddRange(delaytime);
             deflateStream.Write(temp.ToArray(), 0, temp.Count);
@@ -71,13 +69,11 @@ namespace BynaCam_Recorder.Classes
         {
             //tibiaver
             List<byte> temp = new List<byte>();
-            temp.Add((byte)HeaderType.TIBIAVERSION);
             temp.AddRange(BitConverter.GetBytes((ushort)Version.TibiaVersion.ToByteArray().Length));
             temp.AddRange(Version.TibiaVersion.ToByteArray());
 
             //playtime
             byte[] playtime = System.Text.ASCIIEncoding.ASCII.GetBytes(playTime.ToString());
-            temp.Add((byte)HeaderType.PLAYTIME);
             temp.AddRange(BitConverter.GetBytes((ushort)playtime.Length));
             temp.AddRange(playtime);
 
