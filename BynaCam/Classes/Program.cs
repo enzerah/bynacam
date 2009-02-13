@@ -50,6 +50,7 @@ namespace BynaCam
                
                 while (!reader.readingDone)
                 {
+                    
                     TibiaClient.updateTitle(client, reader.speed, reader.actualTime, reader.movieTime);
                     Thread.Sleep(100);
                 }

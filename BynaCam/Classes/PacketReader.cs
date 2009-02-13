@@ -23,6 +23,7 @@ namespace BynaCam
         string movieFile;
         public double speed = 1.0;
         public bool readingDone = false;
+        Tibia.Util.Timer movieTimer;
 
         TimeSpan packetDelay = TimeSpan.Zero;
         byte[] truePacket = new byte[0];
@@ -122,6 +123,12 @@ namespace BynaCam
 
         public void ReadAllPackets()
         {
+            movieTimer = new Tibia.Util.Timer(100, true);
+            movieTimer.Execute += new Tibia.Util.Timer.TimerExecution(delegate
+            {
+                actualTime = actualTime + (new TimeSpan(0, 0, 0, 0, (int)(100 * speed)));
+            });
+
             new Thread(new ThreadStart(delegate()
             {
                 getHeader();
@@ -164,6 +171,8 @@ namespace BynaCam
 
                     sendPacket(truePacket, packetDelay);
                 }
+
+                movieTimer.Stop();
                 readingDone = true;
                 })).Start();
         } 
