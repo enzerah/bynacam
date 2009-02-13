@@ -165,9 +165,8 @@ namespace BynaCam
                         || truePacket[0] == (byte)IncomingPacketType.HouseTextWindow
                         || truePacket[0] == (byte)IncomingPacketType.ItemTextWindow
                         || truePacket[0] == (byte)IncomingPacketType.RuleViolationOpen
-                        || truePacket[0] == (byte)IncomingPacketType.ShopWindowOpen
                         || truePacket[0] == (byte)IncomingPacketType.ShowTutorial)
-                        return;
+                        return; 
 
                     sendPacket(truePacket, packetDelay);
                 }
