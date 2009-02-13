@@ -49,6 +49,7 @@ namespace BynaCam
                 
                 TibiaNetwork network = new TibiaNetwork(client);
                 PacketReader reader = new PacketReader(client, network, camfilepath);
+                Thread.Sleep(500);
                 client.AutoLogin("1", "1", "Byna", "BynaCam");
                 
                 try 
@@ -64,9 +65,7 @@ namespace BynaCam
 
                 while (!reader.readingDone)
                 {
-                    reader.setUpKeyboardHook(client);
-                    reader.updateClientTitle(client);
-                    Thread.Sleep(10);
+                    Thread.Sleep(100);
                 }
             }
             else

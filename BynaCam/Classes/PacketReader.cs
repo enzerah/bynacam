@@ -10,18 +10,24 @@ using System.Threading;
 using System.IO;
 using System.Windows.Forms;
 using System.IO.Compression;
+using System.Diagnostics;
 
 namespace BynaCam
 {
     public class PacketReader
     {
         Client client;
-        StreamReader stream;
+        FileStream stream;
+        DeflateStream defStream;
         TibiaNetwork Network;
         string movieFile;
-        public int speed = 1;
-        public string movieVer;
         public bool readingDone = false;
+
+        TimeSpan packetDelay = TimeSpan.Zero;
+        byte[] truePacket = new byte[0];
+
+        public string TibiaVer = string.Empty;
+        public TimeSpan movieTime = TimeSpan.Zero;
 
         public PacketReader(Client c, TibiaNetwork network, string moviePath)
         {
@@ -33,123 +39,105 @@ namespace BynaCam
 
             Network = network;//gameserver.dll
             movieFile = moviePath;
-            stream = new StreamReader(new DeflateStream(File.Open(movieFile, FileMode.Open), CompressionMode.Decompress));
+            stream = new FileStream(movieFile, FileMode.Open);
+            defStream = new DeflateStream(stream, CompressionMode.Decompress);
+        }
+
+        private bool getHeader()
+        {
+            byte[] buffer = new byte[2];
+            ushort len;
+
+            try
+            {
+                //Tibia Version
+                stream.Read(buffer, 0, 2);
+                len = BitConverter.ToUInt16(buffer, 0);
+                buffer = new byte[len];
+                stream.Read(buffer, 0, len);
+                TibiaVer = buffer.ToPrintableString(0, len);
+                //Playing Time
+                buffer = new byte[2];
+                stream.Read(buffer, 0, 2);
+                len = BitConverter.ToUInt16(buffer, 0);
+                buffer = new byte[len];
+                stream.Read(buffer, 0, len);
+                movieTime = TimeSpan.Parse(buffer.ToPrintableString(0, len));
+            }
+            catch { return false; }
+            return true;
+        }
+
+        private bool parsePacketFromFile()
+        {
+            byte[] buffer = new byte[2];
+            ushort len;
+            try
+            {
+                defStream.Read(buffer, 0, 2);
+                len = BitConverter.ToUInt16(buffer, 0);
+                buffer = new byte[len];
+                defStream.Read(buffer, 0, len);
+                packetDelay = TimeSpan.Parse(buffer.ToPrintableString(0, len));
+
+                defStream.Read(buffer, 0, 2);
+                len = BitConverter.ToUInt16(buffer, 0);
+                buffer = new byte[len];
+                defStream.Read(buffer, 0, len);
+                truePacket = buffer;
+                return true;
+            }
+            catch { return false; }
+        }
+
+        private void sendPacketToServer(byte[] packet, TimeSpan delay)
+        {
+            Thread.Sleep(packetDelay);
+            try
+            {
+                Network.uxGameServer.Send(truePacket);
+            }
+            catch { readingDone = true; }
         }
 
         public void ReadAllPackets()
         {
             new Thread(new ThreadStart(delegate()
             {
-                TimeSpan delay = TimeSpan.Zero;
-                byte[] packet = new byte[0];
+                getHeader();
 
-                stream.ReadLine();
-
-                while (!stream.EndOfStream)
+                while (defStream.CanRead)
                 {
-                    try
+                    if (!parsePacketFromFile())
                     {
-                        delay = TimeSpan.Parse(stream.ReadLine());
-                        packet = stream.ReadLine().ToBytesAsHex();
-                    }
-                    catch 
-                    {
-                        Thread.Sleep(3000);
                         readingDone = true;
-                        Thread.CurrentThread.Abort(); 
+                        return;
                     }
 
-                    if (packet == null)
-                        continue;
+                    if (truePacket[0] == 0x65
+                       || truePacket[0] == 0x66
+                       || truePacket[0] == 0x67
+                       || truePacket[0] == 0x68
+                       || truePacket[0] == (byte)IncomingPacketType.MapDescription
+                       || truePacket[0] == (byte)IncomingPacketType.SelfAppear
+                       || truePacket[0] == (byte)IncomingPacketType.WorldLight)
+                        packetDelay = TimeSpan.Zero;
 
-                    if (packet[0] == 0xc8 //setoufit block
-                        || packet[0] == (byte)IncomingPacketType.ChannelList ////channellist block
-                        || packet[0] == 0x96 //textwindow block
-                        || packet[0] == 0x14 //disconnectclient
-                        || packet[0] == (byte)IncomingPacketType.HouseTextWindow
-                        || packet[0] == (byte)IncomingPacketType.ItemTextWindow
-                        || packet[0] == (byte)IncomingPacketType.RuleViolationOpen
-                        || packet[0] == (byte)IncomingPacketType.ShopWindowOpen
-                        || packet[0] == (byte)IncomingPacketType.ShowTutorial)
-                        continue;
+                    if (truePacket[0] == 0xc8 //setoufit block
+                        || truePacket[0] == (byte)IncomingPacketType.ChannelList ////channellist block
+                        || truePacket[0] == 0x96 //textwindow block
+                        || truePacket[0] == 0x14 //disconnectclient
+                        || truePacket[0] == (byte)IncomingPacketType.HouseTextWindow
+                        || truePacket[0] == (byte)IncomingPacketType.ItemTextWindow
+                        || truePacket[0] == (byte)IncomingPacketType.RuleViolationOpen
+                        || truePacket[0] == (byte)IncomingPacketType.ShopWindowOpen
+                        || truePacket[0] == (byte)IncomingPacketType.ShowTutorial)
+                        return;
 
-                    if (packet[0] == 0x65 || packet[0] == 0x66 || packet[0] == 0x67 || packet[0] == 0x68
-                         || packet[0] == (byte)IncomingPacketType.MapDescription
-                         || packet[0] == (byte)IncomingPacketType.SelfAppear
-                         || packet[0] == (byte)IncomingPacketType.WorldLight)
-                    {
-                        try
-                        {
-                            Network.uxGameServer.Send(packet);
-                        }
-                        catch { readingDone = true; return; }
-                        continue;
-                    }
-                    else
-                    {
-                        Thread.Sleep(delay.Milliseconds / speed);
-                    }
-
-                    try
-                    {
-                        Network.uxGameServer.Send(packet);
-                    }
-                    catch { readingDone = true; return; }
+                    sendPacketToServer(truePacket, packetDelay);
                 }
-                Thread.Sleep(3000);
                 readingDone = true;
-            })).Start();
-        }
-
-        public void updateClientTitle(Client client)
-        {
-            try
-            {
-                client.Title = "BynaCam -> Speed: x" + speed;
-            }
-            catch { }
-        }
-
-        public void setUpKeyboardHook(Client client)
-        {
-            KeyboardHook.Enable();
-            KeyboardHook.KeyDown = null;
-            KeyboardHook.KeyDown += new KeyboardHook.KeyboardHookHandler(delegate(Keys key)
-            {
-                if (client.IsActive)
-                {
-                    if (key == Keys.Right)
-                    {
-                        if (speed == 50)
-                            return false;
-                        speed++;
-                        updateClientTitle(client);
-                    }
-                    if (key == Keys.Left)
-                    {
-                        if (speed == 1)
-                            return false;
-                        speed--;
-                        updateClientTitle(client);
-                    }
-                    if (key == Keys.Up)
-                    {
-                        speed = 50;
-                        updateClientTitle(client);
-                    }
-                    if (key == Keys.Down)
-                    {
-                        speed = 1;
-                        updateClientTitle(client);
-                    }
-
-                    if (key == Keys.Left || key == Keys.Right
-                        || key == Keys.Down || key == Keys.Up)
-                        return false;
-                }
-                return true;
-            });
-            KeyboardHook.KeyDown += null;
-        }
+                })).Start();
+        } 
     }
 }
