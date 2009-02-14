@@ -62,6 +62,7 @@ namespace BynaCam_Recorder
                     {
                         CapturedPacket packet = PacketQueue.PacketQ.Dequeue();
                         fileHandler.WriteHeader(PacketQueue.allTime.Elapsed);
+                        fileHandler.WriteCurrentTime(PacketQueue.allTime.Elapsed);
                         fileHandler.WriteDelay(packet.Time);
                         fileHandler.WriteTruePacket(packet.Packet);
                         fileHandler.deflateStream.Flush();
