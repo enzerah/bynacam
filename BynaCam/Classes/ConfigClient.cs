@@ -44,7 +44,7 @@ namespace BynaCam
                 OpenFileDialog tibiaDialog = new OpenFileDialog();
                 tibiaDialog.CheckFileExists = true;
                 tibiaDialog.CheckPathExists = true;
-                tibiaDialog.InitialDirectory = "C:\\Program Files\\Tibia\\";
+                tibiaDialog.InitialDirectory = "%programfiles%\\Tibia\\";
                 tibiaDialog.Filter = "Exe files|*.exe";
                 tibiaDialog.Multiselect = false;
 
