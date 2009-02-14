@@ -27,6 +27,7 @@ namespace BynaCam
 
         TimeSpan packetDelay = TimeSpan.Zero;
         byte[] truePacket = new byte[0];
+        public TimeSpan packetTime = TimeSpan.Zero;
 
         string TibiaVer = string.Empty;
         public TimeSpan movieTime = TimeSpan.Zero;
@@ -92,12 +93,14 @@ namespace BynaCam
             ushort len;
             try
             {
+                defStream.Read(buffer, 0, 1);
                 defStream.Read(buffer, 0, 2);
                 len = BitConverter.ToUInt16(buffer, 0);
                 buffer = new byte[len];
                 defStream.Read(buffer, 0, len);
                 packetDelay = TimeSpan.Parse(buffer.ToPrintableString(0, len));
 
+                defStream.Read(buffer, 0, 1);
                 defStream.Read(buffer, 0, 2);
                 len = BitConverter.ToUInt16(buffer, 0);
                 buffer = new byte[len];
@@ -108,6 +111,20 @@ namespace BynaCam
             catch { return false; }
         }
         #endregion
+
+        private void getTime()
+        {
+            byte[] buffer = new byte[2];
+            ushort len;
+
+            //Time
+            defStream.Read(buffer, 0, 1);
+            defStream.Read(buffer, 0, 2); //len
+            len = BitConverter.ToUInt16(buffer, 0);
+            buffer = new byte[len];
+            defStream.Read(buffer, 0, len);
+            packetTime = TimeSpan.Parse(buffer.ToPrintableString(0, len));
+        }
 
         #region sendPacket
         private void sendPacket(byte[] packet, TimeSpan delay)
@@ -126,7 +143,7 @@ namespace BynaCam
             movieTimer = new Tibia.Util.Timer(100, true);
             movieTimer.Execute += new Tibia.Util.Timer.TimerExecution(delegate
             {
-                actualTime = actualTime + (new TimeSpan(0, 0, 0, 0, (int)(100 * speed)));
+                actualTime = packetTime + packetDelay;
             });
 
             new Thread(new ThreadStart(delegate()
@@ -143,6 +160,9 @@ namespace BynaCam
 
                 while (defStream.CanRead)
                 {
+                    try { getTime(); }
+                    catch { }
+
                     if (!getPacket())
                     {
                         readingDone = true;

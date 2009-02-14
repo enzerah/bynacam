@@ -19,16 +19,11 @@ namespace BynaCam_Recorder.Classes
      *   DELAY AND/OR TRUE PACKET (compressed by deflate)
      */
 
-    public enum HeaderType
-    {
-        TIBIAVERSION = 1,
-        PLAYTIME = 2
-    }
-
     public enum PacketType
     {
         PACKET = 3,
-        DELAY = 4
+        DELAY = 4,
+        TIME = 5
     }
 
     public class FileHandler
@@ -48,10 +43,20 @@ namespace BynaCam_Recorder.Classes
         public void WriteTruePacket(byte[] packet)
         {
             List<byte> temp = new List<byte>();
+            temp.Add((byte)PacketType.PACKET);
             temp.AddRange(BitConverter.GetBytes((ushort)packet.Length));
             temp.AddRange(packet);
+            deflateStream.Write(temp.ToArray(), 0, temp.Count);     
+        }
+
+        public void WriteCurrentTime(TimeSpan playTime)
+        {
+            List<byte> temp = new List<byte>();
+            temp.Add((byte)PacketType.TIME);
+            byte[] playtime = System.Text.ASCIIEncoding.ASCII.GetBytes(playTime.ToString());
+            temp.AddRange(BitConverter.GetBytes((ushort)playtime.Length));
+            temp.AddRange(playtime);
             deflateStream.Write(temp.ToArray(), 0, temp.Count);
-            //fileStream.Write(temp.ToArray(), 0, temp.Count);        
         }
 
         public void WriteDelay(TimeSpan delay)
@@ -59,10 +64,10 @@ namespace BynaCam_Recorder.Classes
             //playtime
             List<byte> temp = new List<byte>();
             byte[] delaytime = System.Text.ASCIIEncoding.ASCII.GetBytes(delay.ToString());
+            temp.Add((byte)PacketType.DELAY);
             temp.AddRange(BitConverter.GetBytes((ushort)delaytime.Length));
             temp.AddRange(delaytime);
             deflateStream.Write(temp.ToArray(), 0, temp.Count);
-            //fileStream.Write(temp.ToArray(), 0, temp.Count);
         }
 
         public void WriteHeader(TimeSpan playTime)
