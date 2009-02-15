@@ -33,7 +33,10 @@
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.saveAndExitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.label1 = new System.Windows.Forms.Label();
+            this.cb_vips = new System.Windows.Forms.CheckBox();
+            this.cb_messages = new System.Windows.Forms.CheckBox();
+            this.cb_pms = new System.Windows.Forms.CheckBox();
+            this.cb_skills = new System.Windows.Forms.CheckBox();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -59,25 +62,65 @@
             this.saveAndExitToolStripMenuItem.Text = "Save and Exit";
             this.saveAndExitToolStripMenuItem.Click += new System.EventHandler(this.saveAndExitToolStripMenuItem_Click);
             // 
-            // label1
+            // cb_vips
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(12, 8);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(92, 13);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "Waiting for login...";
+            this.cb_vips.AutoSize = true;
+            this.cb_vips.Location = new System.Drawing.Point(13, 13);
+            this.cb_vips.Name = "cb_vips";
+            this.cb_vips.Size = new System.Drawing.Size(75, 17);
+            this.cb_vips.TabIndex = 1;
+            this.cb_vips.Text = "Hide VIP\'s";
+            this.cb_vips.UseVisualStyleBackColor = true;
+            this.cb_vips.CheckedChanged += new System.EventHandler(this.cb_vips_CheckedChanged);
+            // 
+            // cb_messages
+            // 
+            this.cb_messages.AutoSize = true;
+            this.cb_messages.Location = new System.Drawing.Point(13, 37);
+            this.cb_messages.Name = "cb_messages";
+            this.cb_messages.Size = new System.Drawing.Size(174, 17);
+            this.cb_messages.TabIndex = 2;
+            this.cb_messages.Text = "Hide default channel messages";
+            this.cb_messages.UseVisualStyleBackColor = true;
+            this.cb_messages.CheckedChanged += new System.EventHandler(this.cb_messages_CheckedChanged);
+            // 
+            // cb_pms
+            // 
+            this.cb_pms.AutoSize = true;
+            this.cb_pms.Location = new System.Drawing.Point(13, 61);
+            this.cb_pms.Name = "cb_pms";
+            this.cb_pms.Size = new System.Drawing.Size(133, 17);
+            this.cb_pms.TabIndex = 3;
+            this.cb_pms.Text = "Hide private messages";
+            this.cb_pms.UseVisualStyleBackColor = true;
+            this.cb_pms.CheckedChanged += new System.EventHandler(this.cb_pms_CheckedChanged);
+            // 
+            // cb_skills
+            // 
+            this.cb_skills.AutoSize = true;
+            this.cb_skills.Location = new System.Drawing.Point(13, 85);
+            this.cb_skills.Name = "cb_skills";
+            this.cb_skills.Size = new System.Drawing.Size(73, 17);
+            this.cb_skills.TabIndex = 4;
+            this.cb_skills.Text = "Hide skills";
+            this.cb_skills.UseVisualStyleBackColor = true;
+            this.cb_skills.CheckedChanged += new System.EventHandler(this.cb_skills_CheckedChanged);
             // 
             // mainFrm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(243, 29);
-            this.Controls.Add(this.label1);
+            this.ClientSize = new System.Drawing.Size(195, 110);
+            this.Controls.Add(this.cb_skills);
+            this.Controls.Add(this.cb_pms);
+            this.Controls.Add(this.cb_messages);
+            this.Controls.Add(this.cb_vips);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "mainFrm";
-            this.Text = "BynaCam v2 - Recorder";
+            this.Text = "BynaCam v2 - Options";
             this.Load += new System.EventHandler(this.Form1_Load);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.mainFrm_FormClosing);
             this.contextMenuStrip1.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -88,8 +131,11 @@
 
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem saveAndExitToolStripMenuItem;
-        private System.Windows.Forms.Label label1;
         public System.Windows.Forms.NotifyIcon notifyIcon1;
+        public System.Windows.Forms.CheckBox cb_vips;
+        public System.Windows.Forms.CheckBox cb_messages;
+        public System.Windows.Forms.CheckBox cb_pms;
+        public System.Windows.Forms.CheckBox cb_skills;
 
 
     }

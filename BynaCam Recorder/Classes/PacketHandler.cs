@@ -27,7 +27,7 @@ namespace BynaCam_Recorder.Classes
         {
             Tibia.Packets.Outgoing.PlayerSpeechPacket p = (Tibia.Packets.Outgoing.PlayerSpeechPacket)packet;
 
-            if (p.SpeechType == SpeechType.Private)
+            if (p.SpeechType == SpeechType.Private && !mainFrm.hidePm)
             {
                     Tibia.Packets.Incoming.CreatureSpeechPacket pack = new Tibia.Packets.Incoming.CreatureSpeechPacket(client);
                     pack.SenderName = p.Receiver;
@@ -45,6 +45,46 @@ namespace BynaCam_Recorder.Classes
 
         private void Proxy_IncomingSplitPacket(byte type, byte[] data)
         {
+            if (mainFrm.hideVips)
+            {
+                if (type == (byte)IncomingPacketType.VipState
+                    || type == (byte)IncomingPacketType.VipLogout
+                    || type == (byte)IncomingPacketType.VipLogin)
+                    return;
+            }
+            else if (mainFrm.hideSkills)
+            {
+                if (type == (byte)IncomingPacketType.PlayerSkillsUpdate)
+                    return;
+            }
+            else if (mainFrm.hideMsg)
+            {
+                if (type == (byte)IncomingPacketType.CreatureSpeech)
+                {
+                    NetworkMessage msg = new NetworkMessage(data);
+                    msg.GetByte();
+                    msg.GetUInt32();
+                    msg.GetString();
+                    msg.GetUInt16();
+                    byte speechtype = msg.GetByte();
+                    if (speechtype == (byte)Tibia.Packets.SpeechType.Say ||
+                        speechtype == (byte)Tibia.Packets.SpeechType.Whisper ||
+                        speechtype == (byte)Tibia.Packets.SpeechType.Yell)
+                        return;
+                }
+            }
+            else if (mainFrm.hidePm)
+            {
+                NetworkMessage msg = new NetworkMessage(data);
+                    msg.GetByte();
+                    msg.GetUInt32();
+                    msg.GetString();
+                    msg.GetUInt16();
+                    byte speechtype = msg.GetByte();
+                if (speechtype == (byte)Tibia.Packets.SpeechType.Private)
+                    return;
+            }
+
             PacketQueue.LogPacket(data);
         }
     }
