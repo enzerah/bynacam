@@ -10,7 +10,7 @@ namespace BynaCam
     {
         public static void updateTitle(Client c, double speed, TimeSpan actualTime, TimeSpan movieTime)
         {
-            c.Title = "BynaCam :: Speed x"+speed+" :: Time["+actualTime.Hours+":"+actualTime.Minutes+":"+actualTime.Seconds+" / "+movieTime.Hours+":"+movieTime.Minutes+":"+movieTime.Seconds+"]";
+            c.Title = "BynaCam :: Speed x"+speed+" :: Time ["+actualTime.Hours+":"+actualTime.Minutes+":"+actualTime.Seconds+" / "+movieTime.Hours+":"+movieTime.Minutes+":"+movieTime.Seconds+"]";
         }
     }
 }

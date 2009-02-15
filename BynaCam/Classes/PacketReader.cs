@@ -33,6 +33,8 @@ namespace BynaCam
         public TimeSpan movieTime = TimeSpan.Zero;
         public TimeSpan actualTime = TimeSpan.Zero;
 
+        Stopwatch addWatch = new Stopwatch();
+
         #region Constructor
 
         public PacketReader(Client c, TibiaNetwork network, string moviePath)
@@ -140,15 +142,20 @@ namespace BynaCam
 
         public void ReadAllPackets()
         {
-            movieTimer = new Tibia.Util.Timer(100, true);
+            movieTimer = new Tibia.Util.Timer(100, false);
             movieTimer.Execute += new Tibia.Util.Timer.TimerExecution(delegate
             {
-                actualTime = packetTime + packetDelay;
+                    try
+                    {
+                        actualTime = packetTime + TimeSpan.FromTicks(addWatch.Elapsed.Ticks / packetDelay.Ticks);
+                    }
+                    catch { }
             });
 
             new Thread(new ThreadStart(delegate()
             {
                 getHeader();
+                movieTimer.Start();
 
                 if (TibiaVer != client.Version)
                 {
@@ -160,39 +167,30 @@ namespace BynaCam
 
                 while (defStream.CanRead)
                 {
-                    try { getTime(); }
-                    catch { }
-
-                    if (!getPacket())
+                    try 
                     {
-                        readingDone = true;
-                        return;
+                        try { getTime(); }
+                        catch { }
+                        if (!getPacket())
+                            break;
+
+                        addWatch.Start();
+                        sendPacket(truePacket, packetDelay);
+                        addWatch.Stop();
                     }
-
-                    if (truePacket[0] == 0x65
-                       || truePacket[0] == 0x66
-                       || truePacket[0] == 0x67
-                       || truePacket[0] == 0x68
-                       || truePacket[0] == (byte)IncomingPacketType.MapDescription
-                       || truePacket[0] == (byte)IncomingPacketType.SelfAppear
-                       || truePacket[0] == (byte)IncomingPacketType.WorldLight)
-                        packetDelay = TimeSpan.Zero;
-
-                    if (truePacket[0] == 0xc8 //setoufit block
-                        || truePacket[0] == (byte)IncomingPacketType.ChannelList ////channellist block
-                        || truePacket[0] == 0x96 //textwindow block
-                        || truePacket[0] == 0x14 //disconnectclient
-                        || truePacket[0] == (byte)IncomingPacketType.HouseTextWindow
-                        || truePacket[0] == (byte)IncomingPacketType.ItemTextWindow
-                        || truePacket[0] == (byte)IncomingPacketType.RuleViolationOpen
-                        || truePacket[0] == (byte)IncomingPacketType.ShowTutorial)
-                        return; 
-
-                    sendPacket(truePacket, packetDelay);
+                    catch { continue; }
                 }
 
-                movieTimer.Stop();
-                readingDone = true;
+                try
+                {
+                    movieTimer.Stop();
+                    actualTime = movieTime;
+                    TibiaClient.updateTitle(client, speed, actualTime, movieTime);
+                    Thread.Sleep(1000);
+                    movieTimer.Stop();
+                    readingDone = true;
+                }
+                catch { Process.GetCurrentProcess().Kill(); }
                 })).Start();
         } 
     }
