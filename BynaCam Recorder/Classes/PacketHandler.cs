@@ -52,12 +52,12 @@ namespace BynaCam_Recorder.Classes
                     || type == (byte)IncomingPacketType.VipLogin)
                     return;
             }
-            else if (mainFrm.hideSkills)
+            if (mainFrm.hideSkills)
             {
                 if (type == (byte)IncomingPacketType.PlayerSkillsUpdate)
                     return;
             }
-            else if (mainFrm.hideMsg)
+            if (mainFrm.hideMsg)
             {
                 if (type == (byte)IncomingPacketType.CreatureSpeech)
                 {
@@ -73,7 +73,7 @@ namespace BynaCam_Recorder.Classes
                         return;
                 }
             }
-            else if (mainFrm.hidePm)
+            if (mainFrm.hidePm)
             {
                 NetworkMessage msg = new NetworkMessage(data);
                     msg.GetByte();
