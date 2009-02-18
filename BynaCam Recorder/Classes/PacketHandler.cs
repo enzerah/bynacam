@@ -19,44 +19,33 @@ namespace BynaCam_Recorder.Classes
             client = c;
             if (!client.StartProxy())
                 throw new Exception("Could not start Proxy!");
-            c.Proxy.IncomingSplitPacket += new SocketBase.SplitPacket(Proxy_IncomingSplitPacket);
             c.Proxy.ReceivedPlayerSpeechOutgoingPacket += new SocketBase.OutgoingPacketListener(Proxy_ReceivedPlayerSpeechOutgoingPacket);
+            c.Proxy.ReceivedMessageFromClient += new Proxy.MessageListener(Proxy_ReceivedMessageFromClient);
         }
 
-        private bool Proxy_ReceivedPlayerSpeechOutgoingPacket(OutgoingPacket packet)
+        private void Proxy_ReceivedMessageFromClient(NetworkMessage server)
         {
-            Tibia.Packets.Outgoing.PlayerSpeechPacket p = (Tibia.Packets.Outgoing.PlayerSpeechPacket)packet;
-
-            if (p.SpeechType == SpeechType.Private && !mainFrm.hidePm)
-            {
-                    Tibia.Packets.Incoming.CreatureSpeechPacket pack = new Tibia.Packets.Incoming.CreatureSpeechPacket(client);
-                    pack.SenderName = p.Receiver;
-                    pack.SenderLevel = 0;
-                    pack.Message = ">> " + p.Message;
-                    pack.SpeechType = p.SpeechType;
-                    pack.ChannelId = p.ChannelId;
-                    pack.Position = Tibia.Objects.Location.Invalid;
-                    pack.Time = 0;
-                    PacketQueue.LogPacket(pack.ToByteArray());
-            }
-
-            return true;
+            NetworkMessage msg = new NetworkMessage(client, server.Packet);
+            msg.PrepareToRead();
+            msg.GetUInt16(); //logical packet size
+            parsePacket(msg.GetBytes(msg.Length - msg.Position));
         }
 
-        private void Proxy_IncomingSplitPacket(byte type, byte[] data)
+        private void parsePacket(byte[] data)
         {
-            if (mainFrm.hideVips)
-            {
-                if (type == (byte)IncomingPacketType.VipState
-                    || type == (byte)IncomingPacketType.VipLogout
-                    || type == (byte)IncomingPacketType.VipLogin)
-                    return;
-            }
-            if (mainFrm.hideSkills)
-            {
-                if (type == (byte)IncomingPacketType.PlayerSkillsUpdate)
-                    return;
-            }
+            byte type = data[0];
+
+            if (type == (byte)IncomingPacketType.OutfitWindow
+            || type == (byte)IncomingPacketType.ChannelList
+            || type == (byte)IncomingPacketType.ItemTextWindow
+            || type == (byte)IncomingPacketType.ErrorMessage
+            || type == (byte)IncomingPacketType.HouseTextWindow
+            || type == (byte)IncomingPacketType.ItemTextWindow
+            || type == (byte)IncomingPacketType.RuleViolationOpen
+            || type == (byte)IncomingPacketType.ShowTutorial
+            || type == (byte)IncomingPacketType.WaitingList)
+                return;
+
             if (mainFrm.hideMsg)
             {
                 if (type == (byte)IncomingPacketType.CreatureSpeech)
@@ -75,17 +64,40 @@ namespace BynaCam_Recorder.Classes
             }
             if (mainFrm.hidePm)
             {
-                NetworkMessage msg = new NetworkMessage(data);
+                if (type == (byte)IncomingPacketType.CreatureSpeech)
+                {
+                    NetworkMessage msg = new NetworkMessage(data);
                     msg.GetByte();
                     msg.GetUInt32();
                     msg.GetString();
                     msg.GetUInt16();
                     byte speechtype = msg.GetByte();
-                if (speechtype == (byte)Tibia.Packets.SpeechType.Private)
-                    return;
+                    if (speechtype == (byte)Tibia.Packets.SpeechType.Private)
+                        return;
+                }
             }
 
             PacketQueue.LogPacket(data);
+        }
+
+        private bool Proxy_ReceivedPlayerSpeechOutgoingPacket(OutgoingPacket packet)
+        {
+            Tibia.Packets.Outgoing.PlayerSpeechPacket p = (Tibia.Packets.Outgoing.PlayerSpeechPacket)packet;
+
+            if (p.SpeechType == SpeechType.Private && !mainFrm.hideOutPm)
+            {
+                    Tibia.Packets.Incoming.CreatureSpeechPacket pack = new Tibia.Packets.Incoming.CreatureSpeechPacket(client);
+                    pack.SenderName = p.Receiver;
+                    pack.SenderLevel = 0;
+                    pack.Message = ">> " + p.Message;
+                    pack.SpeechType = p.SpeechType;
+                    pack.ChannelId = p.ChannelId;
+                    pack.Position = Tibia.Objects.Location.Invalid;
+                    pack.Time = 0;
+                    PacketQueue.LogPacket(pack.ToByteArray());
+            }
+
+            return true;
         }
     }
 }

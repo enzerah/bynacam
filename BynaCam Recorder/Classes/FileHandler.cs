@@ -9,23 +9,6 @@ using Tibia;
 
 namespace BynaCam_Recorder.Classes
 {
-    /*
-     * File struct:
-     * [header]
-     * 1 - Tibia Version
-     * 2 - Total playing time
-     * 
-     * [rest file]
-     *   DELAY AND/OR TRUE PACKET (compressed by deflate)
-     */
-
-    public enum PacketType
-    {
-        PACKET = 3,
-        DELAY = 4,
-        TIME = 5
-    }
-
     public class FileHandler
     {
         public FileStream fileStream;
@@ -37,54 +20,57 @@ namespace BynaCam_Recorder.Classes
         public void Open(string cFileName)
         {
             fileStream = new FileStream(cFileName, FileMode.Create);
-            deflateStream = new DeflateStream(fileStream, CompressionMode.Compress);
+            deflateStream = new DeflateStream(fileStream, CompressionMode.Compress, false);
         }
 
-        public void WriteTruePacket(byte[] packet)
+        public void WritePacket(byte[] packet, TimeSpan packetTime, TimeSpan packetDelay)
         {
-            List<byte> temp = new List<byte>();
-            temp.Add((byte)PacketType.PACKET);
-            temp.AddRange(BitConverter.GetBytes((ushort)packet.Length));
-            temp.AddRange(packet);
-            deflateStream.Write(temp.ToArray(), 0, temp.Count);     
-        }
-
-        public void WriteCurrentTime(TimeSpan playTime)
-        {
-            List<byte> temp = new List<byte>();
-            temp.Add((byte)PacketType.TIME);
-            byte[] playtime = System.Text.ASCIIEncoding.ASCII.GetBytes(playTime.ToString());
-            temp.AddRange(BitConverter.GetBytes((ushort)playtime.Length));
-            temp.AddRange(playtime);
-            deflateStream.Write(temp.ToArray(), 0, temp.Count);
-        }
-
-        public void WriteDelay(TimeSpan delay)
-        {
-            //playtime
-            List<byte> temp = new List<byte>();
-            byte[] delaytime = System.Text.ASCIIEncoding.ASCII.GetBytes(delay.ToString());
-            temp.Add((byte)PacketType.DELAY);
-            temp.AddRange(BitConverter.GetBytes((ushort)delaytime.Length));
-            temp.AddRange(delaytime);
-            deflateStream.Write(temp.ToArray(), 0, temp.Count);
+            WriteTime(deflateStream, packetTime);
+            WriteTime(deflateStream, packetDelay);
+            WritePacketBytes(deflateStream, packet);
         }
 
         public void WriteHeader(TimeSpan playTime)
         {
-            //tibiaver
-            List<byte> temp = new List<byte>();
-            temp.AddRange(BitConverter.GetBytes((ushort)Version.TibiaVersion.ToByteArray().Length));
-            temp.AddRange(Version.TibiaVersion.ToByteArray());
-
-            //playtime
-            byte[] playtime = System.Text.ASCIIEncoding.ASCII.GetBytes(playTime.ToString());
-            temp.AddRange(BitConverter.GetBytes((ushort)playtime.Length));
-            temp.AddRange(playtime);
-
             fileStream.Seek(0, SeekOrigin.Begin);
-            fileStream.Write(temp.ToArray(), 0, temp.Count);
+            WriteByte(fileStream, 0x01); //always 0x01
+            //tibiaver
+            WriteString(fileStream, Version.TibiaVersion);
+            //playtime
+            WriteTime(fileStream, playTime);
             fileStream.Seek(0, SeekOrigin.End);
+        }
+
+        private void WriteString(Stream stream, string value)
+        {
+            WriteBytes(stream, BitConverter.GetBytes((ushort)value.Length));
+            WriteBytes(stream, Encoding.ASCII.GetBytes(value));
+        }
+
+        private void WriteTime(Stream stream, TimeSpan value)
+        {
+            WriteUInt32(stream, (uint)value.TotalMilliseconds);
+        }
+
+        public void WritePacketBytes(Stream stream, byte[] packet)
+        {
+            WriteBytes(stream, BitConverter.GetBytes((ushort)packet.Length));
+            WriteBytes(stream, packet);
+        }
+
+        private void WriteUInt32(Stream stream, UInt32 value)
+        {
+            WriteBytes(stream, BitConverter.GetBytes(value));
+        }
+
+        private void WriteBytes(Stream stream, byte[] data)
+        {
+            stream.Write(data, 0, data.Length);
+        }
+
+        private void WriteByte(Stream stream, byte value)
+        {
+            stream.WriteByte(value);
         }
     }
 }

@@ -11,28 +11,24 @@ using System.IO;
 using System.Windows.Forms;
 using System.IO.Compression;
 using System.Diagnostics;
+using BynaCam.Classes;
 
 namespace BynaCam
 {
     public class PacketReader
     {
         Client client;
-        FileStream stream;
-        DeflateStream defStream;
+        public FileHandler stream;
         TibiaNetwork Network;
         string movieFile;
         public double speed = 1.0;
         public bool readingDone = false;
         Tibia.Util.Timer movieTimer;
 
-        TimeSpan packetDelay = TimeSpan.Zero;
-        byte[] truePacket = new byte[0];
-        public TimeSpan packetTime = TimeSpan.Zero;
-
         string TibiaVer = string.Empty;
         public TimeSpan movieTime = TimeSpan.Zero;
         public TimeSpan actualTime = TimeSpan.Zero;
-
+        
         Stopwatch addWatch = new Stopwatch();
 
         #region Constructor
@@ -49,8 +45,8 @@ namespace BynaCam
             movieFile = moviePath;
             try
             {
-                stream = new FileStream(movieFile, FileMode.Open);
-                defStream = new DeflateStream(stream, CompressionMode.Decompress);
+                stream = new FileHandler();
+                stream.Open(moviePath);
             }
             catch 
             { 
@@ -63,101 +59,47 @@ namespace BynaCam
 
         #endregion
 
-        #region getHeader / getPacket
-        private bool getHeader()
-        {
-            byte[] buffer = new byte[2];
-            ushort len;
-            
-            try
-            {
-                //Tibia Version
-                stream.Read(buffer, 0, 2);
-                len = BitConverter.ToUInt16(buffer, 0);
-                buffer = new byte[len];
-                stream.Read(buffer, 0, len);
-                TibiaVer = buffer.ToPrintableString(0, len);
-                //Playing Time
-                buffer = new byte[2];
-                stream.Read(buffer, 0, 2);
-                len = BitConverter.ToUInt16(buffer, 0);
-                buffer = new byte[len];
-                stream.Read(buffer, 0, len);
-                movieTime = TimeSpan.Parse(buffer.ToPrintableString(0, len));
-            }
-            catch { return false; }
-            return true;
-        }
 
-        private bool getPacket()
-        {
-            byte[] buffer = new byte[2];
-            ushort len;
-            try
-            {
-                defStream.Read(buffer, 0, 1);
-                defStream.Read(buffer, 0, 2);
-                len = BitConverter.ToUInt16(buffer, 0);
-                buffer = new byte[len];
-                defStream.Read(buffer, 0, len);
-                packetDelay = TimeSpan.Parse(buffer.ToPrintableString(0, len));
-
-                defStream.Read(buffer, 0, 1);
-                defStream.Read(buffer, 0, 2);
-                len = BitConverter.ToUInt16(buffer, 0);
-                buffer = new byte[len];
-                defStream.Read(buffer, 0, len);
-                truePacket = buffer;
-                return true;
-            }
-            catch { return false; }
-        }
-        #endregion
-
-        private void getTime()
-        {
-            byte[] buffer = new byte[2];
-            ushort len;
-
-            //Time
-            defStream.Read(buffer, 0, 1);
-            defStream.Read(buffer, 0, 2); //len
-            len = BitConverter.ToUInt16(buffer, 0);
-            buffer = new byte[len];
-            defStream.Read(buffer, 0, len);
-            packetTime = TimeSpan.Parse(buffer.ToPrintableString(0, len));
-        }
-
-        #region sendPacket
+        #region Send
         private void sendPacket(byte[] packet, TimeSpan delay)
         {
-            Thread.Sleep((int)(packetDelay.TotalMilliseconds / speed));
+            Thread.Sleep((int)(delay.TotalMilliseconds / speed));
             try
             {
-                Network.uxGameServer.Send(truePacket);
+                Network.uxGameServer.Send(packet);
             }
             catch { readingDone = true; }
         }
         #endregion
 
-        public void ReadAllPackets()
+        #region Update CLIENT title
+        private void UpdateClientTitle()
         {
+            stream.ReadHeader();
+            movieTime = stream.playTime;
+
             movieTimer = new Tibia.Util.Timer(100, false);
             movieTimer.Execute += new Tibia.Util.Timer.TimerExecution(delegate
             {
-                    try
-                    {
-                        actualTime = packetTime + TimeSpan.FromTicks(addWatch.Elapsed.Ticks / packetDelay.Ticks);
-                    }
-                    catch { }
+                try
+                {
+                    TimeSpan time = TimeSpan.FromMilliseconds(addWatch.ElapsedMilliseconds) + stream.packetTime;
+                    if (actualTime < time)
+                      actualTime = time;
+                }
+                catch { }
             });
+            movieTimer.Start();
+        }
+        #endregion
 
+        public void ReadAllPackets()
+        {
             new Thread(new ThreadStart(delegate()
             {
-                getHeader();
-                movieTimer.Start();
+                UpdateClientTitle();
 
-                if (TibiaVer != client.Version)
+                if (stream.tibiaVersion != client.Version)
                 {
                     Messages.Error("Tibia Version does not match to this BynaCam Version!");
                     try { client.Process.Kill(); }
@@ -165,29 +107,18 @@ namespace BynaCam
                     Process.GetCurrentProcess().Kill(); 
                 }
 
-                while (defStream.CanRead)
+                while (stream.ReadPacket())
                 {
-                    try 
-                    {
-                        try { getTime(); }
-                        catch { }
-                        if (!getPacket())
-                            break;
-
-                        addWatch.Start();
-                        sendPacket(truePacket, packetDelay);
-                        addWatch.Stop();
-                    }
-                    catch { continue; }
+                        addWatch = Stopwatch.StartNew();
+                        sendPacket(stream.packet, stream.packetDelay);
                 }
 
                 try
                 {
-                    movieTimer.Stop();
                     actualTime = movieTime;
+                    movieTimer.Stop();
                     TibiaClient.updateTitle(client, speed, actualTime, movieTime);
                     Thread.Sleep(1000);
-                    movieTimer.Stop();
                     readingDone = true;
                 }
                 catch { Process.GetCurrentProcess().Kill(); }

@@ -45,9 +45,9 @@ namespace BynaCam
                     } 
                 }
                 catch { Process.GetCurrentProcess().Kill(); }
-                
+
                 reader.ReadAllPackets();
-               
+
                 while (!reader.readingDone)
                 {
                     

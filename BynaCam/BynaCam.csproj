@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Classes\FileChooser.cs" />
+    <Compile Include="Classes\FileHandler.cs" />
     <Compile Include="Classes\KeyHook.cs" />
     <Compile Include="Network\GameServer.cs" />
     <Compile Include="Classes\ConfigClient.cs" />
