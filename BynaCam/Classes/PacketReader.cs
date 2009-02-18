@@ -24,6 +24,8 @@ namespace BynaCam
         public double speed = 1.0;
         public bool readingDone = false;
         Tibia.Util.Timer movieTimer;
+        bool rewind = false;
+        TimeSpan rewindTime = TimeSpan.Zero;
 
         string TibiaVer = string.Empty;
         public TimeSpan movieTime = TimeSpan.Zero;
@@ -93,6 +95,12 @@ namespace BynaCam
         }
         #endregion
 
+        public void GotoPacketTime(TimeSpan packetTime)
+        {
+            rewind = true;
+            rewindTime = packetTime;
+        }
+
         public void ReadAllPackets()
         {
             new Thread(new ThreadStart(delegate()
@@ -109,6 +117,26 @@ namespace BynaCam
 
                 while (fileHandler.ReadPacket())
                 {
+                    if (rewind)
+                    {
+                        rewind = false;
+                        //code
+                        fileHandler.packetTime = TimeSpan.Zero;
+                        FileStream fileStr = fileHandler.fileStream;
+                        fileStr.Seek(0, SeekOrigin.Begin);
+                        fileHandler.ReadHeader();
+                        fileHandler.deflateStream = new DeflateStream(fileStr, CompressionMode.Decompress);
+                        actualTime = TimeSpan.Zero;
+
+                        while (fileHandler.packetTime < rewindTime)
+                        {
+                            fileHandler.ReadPacket();
+                            sendPacket(fileHandler.packet, TimeSpan.Zero);
+                        }
+
+                        rewindTime = TimeSpan.Zero;
+                        continue;
+                    }
                         addWatch = Stopwatch.StartNew();
                         sendPacket(fileHandler.packet, fileHandler.packetDelay);
                 }
