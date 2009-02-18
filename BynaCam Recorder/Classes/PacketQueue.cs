@@ -36,38 +36,21 @@ namespace BynaCam_Recorder.Classes
         {
             new System.Threading.Thread(new System.Threading.ThreadStart(delegate()
                 {
+                    mainFrm.fileHandler.WriteHeader(allTime.Elapsed);
+
                     while (true)
                     {
                         while (PacketQueue.PacketQ.Count > 0)
                         {
+                            TimeSpan packetDelay = TimeSpan.Zero;
                             CapturedPacket packet = PacketQueue.PacketQ.Dequeue();
 
-                            if (packet.Packet[0] == 0xc8 //setoufit block
-                            || packet.Packet[0] == (byte)IncomingPacketType.ChannelList ////channellist block
-                            || packet.Packet[0] == 0x96 //textwindow block
-                            || packet.Packet[0] == 0x14 //disconnectclient
-                            || packet.Packet[0] == (byte)IncomingPacketType.HouseTextWindow
-                            || packet.Packet[0] == (byte)IncomingPacketType.ItemTextWindow
-                            || packet.Packet[0] == (byte)IncomingPacketType.RuleViolationOpen
-                            || packet.Packet[0] == (byte)IncomingPacketType.ShowTutorial
-                            || packet.Packet[0] == (byte)IncomingPacketType.WaitingList)
-                                break;
+                            if (packet.Packet == null)
+                                continue;
 
-                            mainFrm.fileHandler.WriteHeader(PacketQueue.allTime.Elapsed);
-                            mainFrm.fileHandler.WriteCurrentTime(PacketQueue.allTime.Elapsed);
+                                packetDelay = packet.Time;
 
-                            if (packet.Packet[0] == 0x65
-                                || packet.Packet[0] == 0x66
-                                || packet.Packet[0] == 0x67
-                                || packet.Packet[0] == 0x68
-                                || packet.Packet[0] == (byte)IncomingPacketType.MapDescription
-                                || packet.Packet[0] == (byte)IncomingPacketType.SelfAppear
-                                || packet.Packet[0] == (byte)IncomingPacketType.WorldLight)
-                                mainFrm.fileHandler.WriteDelay(TimeSpan.Zero);
-                            else
-                                mainFrm.fileHandler.WriteDelay(packet.Time);
-
-                            mainFrm.fileHandler.WriteTruePacket(packet.Packet);
+                            mainFrm.fileHandler.WritePacket(packet.Packet, allTime.Elapsed, packetDelay);
                         }
                         System.Threading.Thread.Sleep(100);
                     }

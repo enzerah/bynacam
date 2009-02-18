@@ -37,32 +37,12 @@ namespace BynaCam_Recorder
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            c = ConfigClient.getIniClient();
-            fileHandler = new FileHandler();
-            fileHandler.Open(FileChooser.getBynaCamFile(c));
-            
-            if (c != null)
-            {
-                notifyIcon1.ShowBalloonTip(5000, "BynaCam", "BynaCam is waiting for login...", ToolTipIcon.Info);
-                this.TopMost = true;
-                packetHandler = new PacketHandler(c);
-                c.Exited += new EventHandler(c_Exited);
-                c.Proxy.PlayerLogin += new EventHandler(Proxy_PlayerLogin);
-            }
-            else
-            {
-                MessageBox.Show("Choose your client first!!");
-                notifyIcon1.Visible = false;
-                Process.GetCurrentProcess().Kill();
-            }
-
-         }
+        }
 
         private void saveAndExitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             fileHandler.WriteHeader(PacketQueue.allTime.Elapsed);
             fileHandler.deflateStream.Close();
-            fileHandler.fileStream.Close();
             notifyIcon1.Visible = false;
             c.Process.Kill();
             Process.GetCurrentProcess().Kill();
@@ -72,7 +52,6 @@ namespace BynaCam_Recorder
         {
             fileHandler.WriteHeader(PacketQueue.allTime.Elapsed);
             fileHandler.deflateStream.Close();
-            fileHandler.fileStream.Close();
             notifyIcon1.Visible = false;
             Process.GetCurrentProcess().Kill();
         }
@@ -80,20 +59,13 @@ namespace BynaCam_Recorder
         private void Proxy_PlayerLogin(object sender, EventArgs e)
         {
             notifyIcon1.ShowBalloonTip(2000, "BynaCam", "BynaCam is recording!\r\nTo stop recording just exit your Tibia Client!", ToolTipIcon.Info);
-            
             this.Hide();
         }
 
-        #region Hiding skills, pms etc
+        #region Hiding
         public static bool hidePm = false;
         public static bool hideMsg = false;
-        public static bool hideSkills = false;
-        public static bool hideVips = false;
-
-        private void cb_vips_CheckedChanged(object sender, EventArgs e)
-        {
-            hideVips = cb_vips.Checked;
-        }
+        public static bool hideOutPm = false;
 
         private void cb_messages_CheckedChanged(object sender, EventArgs e)
         {
@@ -105,10 +77,53 @@ namespace BynaCam_Recorder
             hidePm = cb_pms.Checked;
         }
 
-        private void cb_skills_CheckedChanged(object sender, EventArgs e)
+        private void cb_outpm_CheckedChanged(object sender, EventArgs e)
         {
-            hideSkills = cb_skills.Checked;
+            hideOutPm = cb_outpm.Checked;
         }
         #endregion
+
+        #region Open Tibia
+        private void ot_enable_CheckedChanged(object sender, EventArgs e)
+        {
+            if (ot_enable.Checked)
+            {
+                ot_port.Enabled = true;
+                ot_server.Enabled = true;
+            }
+            else
+            {
+                ot_port.Enabled = false;
+                ot_server.Enabled = false;
+            }
+        }
+        #endregion
+
+        private void btn_start_Click(object sender, EventArgs e)
+        {
+            this.Hide();
+            c = ConfigClient.getIniClient();
+            fileHandler = new FileHandler();
+            fileHandler.Open(FileChooser.getBynaCamFile(c));
+
+            if (c != null)
+            {
+                if (ot_enable.Checked)
+                    c.SetOT(ot_server.Text, (short)ot_port.Value);
+
+                notifyIcon1.ShowBalloonTip(5000, "BynaCam", "BynaCam is waiting for login...", ToolTipIcon.Info);
+                packetHandler = new PacketHandler(c);
+                c.Exited += new EventHandler(c_Exited);
+                c.Proxy.PlayerLogin += new EventHandler(Proxy_PlayerLogin);
+            }
+            else
+            {
+                MessageBox.Show("Choose your client first!!");
+                notifyIcon1.Visible = false;
+                Process.GetCurrentProcess().Kill();
+            }
+        }
+
+
     }
 }
