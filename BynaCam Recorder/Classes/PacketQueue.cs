@@ -29,32 +29,26 @@ namespace BynaCam_Recorder.Classes
             }
 
             PacketQ.Enqueue(new CapturedPacket(delayWatch.Elapsed - delayTime, packetdata));
+            ProcessWritePackets();
             delayTime = delayWatch.Elapsed;
         }
 
         public static void ProcessWritePackets()
         {
-            new System.Threading.Thread(new System.Threading.ThreadStart(delegate()
+            lock ("ProcessWritePackets")
+            {
+                mainFrm.fileHandler.WriteHeader(allTime.Elapsed);
+
+                while (PacketQueue.PacketQ.Count > 0)
                 {
-                    mainFrm.fileHandler.WriteHeader(allTime.Elapsed);
+                    CapturedPacket packet = PacketQueue.PacketQ.Dequeue();
 
-                    while (true)
-                    {
-                        while (PacketQueue.PacketQ.Count > 0)
-                        {
-                            TimeSpan packetDelay = TimeSpan.Zero;
-                            CapturedPacket packet = PacketQueue.PacketQ.Dequeue();
+                    if (packet.Packet == null)
+                        continue;
 
-                            if (packet.Packet == null)
-                                continue;
-
-                                packetDelay = packet.Time;
-
-                            mainFrm.fileHandler.WritePacket(packet.Packet, allTime.Elapsed, packetDelay);
-                        }
-                        System.Threading.Thread.Sleep(100);
-                    }
-                })).Start();
+                    mainFrm.fileHandler.WritePacket(packet.Packet, allTime.Elapsed, packet.Time);
+                }
+            }
         }
 
         public struct CapturedPacket
