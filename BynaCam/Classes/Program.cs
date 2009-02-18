@@ -21,7 +21,7 @@ namespace BynaCam
         static void Main(string[] args)
         {
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High;
-            client = ConfigClient.getIniClient();
+            client = Client.OpenMC(ConfigClient.getClientPath(), "");
             
             if (client != null)
             {
@@ -31,27 +31,19 @@ namespace BynaCam
                 client.Exited += new EventHandler(client_Exited);
                 string camfilepath = FileChooser.getCamFilePath(client);
                 
-                TibiaNetwork network = new TibiaNetwork(client);
-                PacketReader reader = new PacketReader(client, network, camfilepath);
-                new KeyHook().setUpKeyboardHook(client, reader);
+                PacketReader packetReader = new PacketReader(client, camfilepath);
+                new KeyHook().setUpKeyboardHook(client, packetReader); //KeyDown
                 Thread.Sleep(500);
                 client.AutoLogin("1", "1", "Byna", "BynaCam");
-                
-                try 
-                { 
-                    while (!network.uxGameServer.Accepted) 
-                    {
-                        Thread.Sleep(100);
-                    } 
-                }
-                catch { Process.GetCurrentProcess().Kill(); }
 
-                reader.ReadAllPackets();
+                while (!packetReader.Network.gameServer.Accepted)
+                    Thread.Sleep(100);
 
-                while (!reader.readingDone)
+                packetReader.ReadAllPackets();
+
+                while (!packetReader.readingDone)
                 {
-                    
-                    TibiaClient.updateTitle(client, reader.speed, reader.actualTime, reader.movieTime);
+                    TibiaClient.updateTitle(client, packetReader.speed, packetReader.actualTime, packetReader.movieTime);
                     Thread.Sleep(100);
                 }
             }

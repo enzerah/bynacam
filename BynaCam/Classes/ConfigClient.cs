@@ -14,28 +14,12 @@ namespace BynaCam
 {
     public static class ConfigClient
     {
-        public static Client getIniClient()
+        public static string getClientPath()
         {
             IniFile inifile = new IniFile(System.Windows.Forms.Application.StartupPath + @"\config.ini");
             if (File.Exists(inifile.IniReadValue("CLIENT", "Path")))
             {
-                WinApi.PROCESS_INFORMATION pi = new Tibia.Util.WinApi.PROCESS_INFORMATION();
-                WinApi.STARTUPINFO si = new Tibia.Util.WinApi.STARTUPINFO();
-
-                WinApi.CreateProcess(inifile.IniReadValue("CLIENT", "Path"), "", IntPtr.Zero, IntPtr.Zero,
-                    false, WinApi.CREATE_SUSPENDED, IntPtr.Zero,
-                    System.IO.Path.GetDirectoryName(inifile.IniReadValue("CLIENT", "Path")), ref si, out pi);
-
-                IntPtr handle = WinApi.OpenProcess(WinApi.PROCESS_ALL_ACCESS, 0, pi.dwProcessId);
-                Process p = Process.GetProcessById(Convert.ToInt32(pi.dwProcessId));
-                Memory.WriteByte(handle, (long)Tibia.Addresses.Client.DMultiClient, Tibia.Addresses.Client.DMultiClientJMP);
-                WinApi.ResumeThread(pi.hThread);
-                p.WaitForInputIdle();
-                Memory.WriteByte(handle, (long)Tibia.Addresses.Client.DMultiClient, Tibia.Addresses.Client.DMultiClientJNZ);
-                WinApi.CloseHandle(handle);
-                WinApi.CloseHandle(pi.hProcess);
-                WinApi.CloseHandle(pi.hThread);
-                return new Client(p);
+                return inifile.IniReadValue("CLIENT", "Path");
             }
             else
             {
@@ -59,7 +43,7 @@ namespace BynaCam
                 }
             }
 
-            return getIniClient();
+            return getClientPath();
         }
     }
         public class IniFile

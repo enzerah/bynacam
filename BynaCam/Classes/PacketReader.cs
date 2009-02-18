@@ -18,8 +18,8 @@ namespace BynaCam
     public class PacketReader
     {
         Client client;
-        public FileHandler stream;
-        TibiaNetwork Network;
+        public FileHandler fileHandler;
+        public TibiaNetwork Network;
         string movieFile;
         public double speed = 1.0;
         public bool readingDone = false;
@@ -33,7 +33,7 @@ namespace BynaCam
 
         #region Constructor
 
-        public PacketReader(Client c, TibiaNetwork network, string moviePath)
+        public PacketReader(Client c, string moviePath)
         {
             client = c;
             if (client == null)
@@ -41,12 +41,12 @@ namespace BynaCam
             if (!File.Exists(moviePath))
                 throw new FileNotFoundException();
 
-            Network = network;//gameserver.dll
+            Network = new TibiaNetwork(client);
             movieFile = moviePath;
             try
             {
-                stream = new FileHandler();
-                stream.Open(moviePath);
+                fileHandler = new FileHandler();
+                fileHandler.Open(moviePath);
             }
             catch 
             { 
@@ -66,7 +66,7 @@ namespace BynaCam
             Thread.Sleep((int)(delay.TotalMilliseconds / speed));
             try
             {
-                Network.uxGameServer.Send(packet);
+                Network.gameServer.Send(packet);
             }
             catch { readingDone = true; }
         }
@@ -75,15 +75,15 @@ namespace BynaCam
         #region Update CLIENT title
         private void UpdateClientTitle()
         {
-            stream.ReadHeader();
-            movieTime = stream.playTime;
+            fileHandler.ReadHeader();
+            movieTime = fileHandler.playTime;
 
             movieTimer = new Tibia.Util.Timer(100, false);
             movieTimer.Execute += new Tibia.Util.Timer.TimerExecution(delegate
             {
                 try
                 {
-                    TimeSpan time = TimeSpan.FromMilliseconds(addWatch.ElapsedMilliseconds) + stream.packetTime;
+                    TimeSpan time = TimeSpan.FromMilliseconds(addWatch.ElapsedMilliseconds) + fileHandler.packetTime;
                     if (actualTime < time)
                       actualTime = time;
                 }
@@ -99,7 +99,7 @@ namespace BynaCam
             {
                 UpdateClientTitle();
 
-                if (stream.tibiaVersion != client.Version)
+                if (fileHandler.tibiaVersion != client.Version)
                 {
                     Messages.Error("Tibia Version does not match to this BynaCam Version!");
                     try { client.Process.Kill(); }
@@ -107,10 +107,10 @@ namespace BynaCam
                     Process.GetCurrentProcess().Kill(); 
                 }
 
-                while (stream.ReadPacket())
+                while (fileHandler.ReadPacket())
                 {
                         addWatch = Stopwatch.StartNew();
-                        sendPacket(stream.packet, stream.packetDelay);
+                        sendPacket(fileHandler.packet, fileHandler.packetDelay);
                 }
 
                 try
