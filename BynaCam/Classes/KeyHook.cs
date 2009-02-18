@@ -17,6 +17,14 @@ namespace BynaCam
             {
                 if (client.IsActive)
                 {
+                    if (key == Keys.Add)
+                    {
+                        reader.GotoPacketTime(reader.actualTime + new TimeSpan(0,3,0));
+                    }
+                    if (key == Keys.Subtract)
+                    {
+                        reader.GotoPacketTime(reader.actualTime - new TimeSpan(0,3,0));
+                    }
                     if (key == Keys.Right)
                     {
                         if (reader.speed == 50)
@@ -39,7 +47,8 @@ namespace BynaCam
                     }
 
                     if (key == Keys.Left || key == Keys.Right
-                        || key == Keys.Down || key == Keys.Up)
+                        || key == Keys.Down || key == Keys.Up
+                        || key == Keys.Subtract || key == Keys.Add)
                     {
                         TibiaClient.updateTitle(client, reader.speed, reader.actualTime, reader.movieTime);
                         return false;
