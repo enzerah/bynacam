@@ -59,7 +59,6 @@ namespace BynaCam_Recorder
         private void Proxy_PlayerLogin(object sender, EventArgs e)
         {
             notifyIcon1.ShowBalloonTip(2000, "BynaCam", "BynaCam is recording!\r\nTo stop recording just exit your Tibia Client!", ToolTipIcon.Info);
-            this.Hide();
         }
 
         #region Hiding
@@ -102,7 +101,7 @@ namespace BynaCam_Recorder
         private void btn_start_Click(object sender, EventArgs e)
         {
             this.Hide();
-            c = ConfigClient.getIniClient();
+            c = Client.OpenMC(ConfigClient.getClientPath(), "");
             fileHandler = new FileHandler();
             fileHandler.Open(FileChooser.getBynaCamFile(c));
 
@@ -118,7 +117,6 @@ namespace BynaCam_Recorder
             }
             else
             {
-                MessageBox.Show("Choose your client first!!");
                 notifyIcon1.Visible = false;
                 Process.GetCurrentProcess().Kill();
             }
