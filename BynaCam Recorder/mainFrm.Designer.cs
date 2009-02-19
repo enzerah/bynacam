@@ -43,6 +43,7 @@
             this.ot_server = new System.Windows.Forms.TextBox();
             this.ot_enable = new System.Windows.Forms.CheckBox();
             this.btn_start = new System.Windows.Forms.Button();
+            this.cb_outnpc = new System.Windows.Forms.CheckBox();
             this.contextMenuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -106,12 +107,13 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.cb_outnpc);
             this.groupBox1.Controls.Add(this.cb_messages);
             this.groupBox1.Controls.Add(this.cb_pms);
             this.groupBox1.Controls.Add(this.cb_outpm);
             this.groupBox1.Location = new System.Drawing.Point(12, 12);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(185, 94);
+            this.groupBox1.Size = new System.Drawing.Size(185, 118);
             this.groupBox1.TabIndex = 5;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Messages";
@@ -122,7 +124,7 @@
             this.groupBox2.Controls.Add(this.ot_port);
             this.groupBox2.Controls.Add(this.ot_server);
             this.groupBox2.Controls.Add(this.ot_enable);
-            this.groupBox2.Location = new System.Drawing.Point(12, 112);
+            this.groupBox2.Location = new System.Drawing.Point(12, 136);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(185, 72);
             this.groupBox2.TabIndex = 6;
@@ -183,7 +185,7 @@
             // 
             // btn_start
             // 
-            this.btn_start.Location = new System.Drawing.Point(12, 187);
+            this.btn_start.Location = new System.Drawing.Point(12, 211);
             this.btn_start.Name = "btn_start";
             this.btn_start.Size = new System.Drawing.Size(185, 21);
             this.btn_start.TabIndex = 7;
@@ -191,14 +193,25 @@
             this.btn_start.UseVisualStyleBackColor = true;
             this.btn_start.Click += new System.EventHandler(this.btn_start_Click);
             // 
+            // cb_outnpc
+            // 
+            this.cb_outnpc.AutoSize = true;
+            this.cb_outnpc.Location = new System.Drawing.Point(6, 88);
+            this.cb_outnpc.Name = "cb_outnpc";
+            this.cb_outnpc.Size = new System.Drawing.Size(167, 17);
+            this.cb_outnpc.TabIndex = 5;
+            this.cb_outnpc.Text = "Hide outgoing NPC messages";
+            this.cb_outnpc.UseVisualStyleBackColor = true;
+            this.cb_outnpc.CheckedChanged += new System.EventHandler(this.cb_outnpc_CheckedChanged);
+            // 
             // mainFrm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(215, 213);
+            this.ClientSize = new System.Drawing.Size(215, 239);
+            this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.btn_start);
             this.Controls.Add(this.groupBox2);
-            this.Controls.Add(this.groupBox1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "mainFrm";
@@ -230,6 +243,7 @@
         private System.Windows.Forms.TextBox ot_server;
         private System.Windows.Forms.CheckBox ot_enable;
         private System.Windows.Forms.Button btn_start;
+        public System.Windows.Forms.CheckBox cb_outnpc;
 
 
     }

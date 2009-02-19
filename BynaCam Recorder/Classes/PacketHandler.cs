@@ -46,6 +46,21 @@ namespace BynaCam_Recorder.Classes
             || type == (byte)IncomingPacketType.WaitingList)
                 return;
 
+            if (mainFrm.hideOutNPC)
+            {
+                if (type == (byte)IncomingPacketType.CreatureSpeech)
+                {
+                    NetworkMessage msg = new NetworkMessage(data);
+                    msg.GetByte();
+                    msg.GetUInt32();
+                    msg.GetString();
+                    msg.GetUInt16();
+                    byte speechtype = msg.GetByte();
+                    if (speechtype == (byte)Tibia.Packets.SpeechType.PrivatePlayerToNPC)
+                        return;
+                }
+            }
+
             if (mainFrm.hideMsg)
             {
                 if (type == (byte)IncomingPacketType.CreatureSpeech)
@@ -95,6 +110,16 @@ namespace BynaCam_Recorder.Classes
                     pack.Position = Tibia.Objects.Location.Invalid;
                     pack.Time = 0;
                     PacketQueue.LogPacket(pack.ToByteArray());
+            }
+            if (p.SpeechType == SpeechType.PrivatePlayerToNPC && !mainFrm.hideOutNPC)
+            {
+                Tibia.Packets.Incoming.CreatureSpeechPacket pack = new Tibia.Packets.Incoming.CreatureSpeechPacket(client);
+                pack.Message = ">> " + p.Message;
+                pack.SenderName = "";
+                pack.SpeechType = SpeechType.PrivateNPCToPlayer;
+                pack.ChannelId = p.ChannelId;
+                pack.Position = Location.Invalid;
+                PacketQueue.LogPacket(pack.ToByteArray());
             }
 
             return true;

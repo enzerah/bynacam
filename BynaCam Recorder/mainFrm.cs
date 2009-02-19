@@ -65,6 +65,12 @@ namespace BynaCam_Recorder
         public static bool hidePm = false;
         public static bool hideMsg = false;
         public static bool hideOutPm = false;
+        public static bool hideOutNPC = false;
+
+        private void cb_outnpc_CheckedChanged(object sender, EventArgs e)
+        {
+            hideOutNPC = cb_outnpc.Checked;
+        }
 
         private void cb_messages_CheckedChanged(object sender, EventArgs e)
         {
@@ -121,6 +127,8 @@ namespace BynaCam_Recorder
                 Process.GetCurrentProcess().Kill();
             }
         }
+
+
 
 
     }
