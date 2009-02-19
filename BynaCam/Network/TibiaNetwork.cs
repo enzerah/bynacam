@@ -14,10 +14,13 @@ namespace BynaCam
         {
             new Thread(new ThreadStart(delegate()
             {
+                ushort loginPort = Tibia.Util.Proxy.GetFreePort(7171);
+                ushort gamePort = Tibia.Util.Proxy.GetFreePort(8181);
+
                 LoginServer.Login login = new LoginServer.Login();
-                login.StartServer(client, 7171, "Byna", "BynaCam", new byte[] { 127, 0, 0, 1 }, 7172);
+                login.StartServer(client, (short)loginPort, "Byna", "BynaCam", new byte[] { 127, 0, 0, 1 }, gamePort);
                 gameServer = new GameServer.GameServer(client);
-                gameServer.SetServer(7172);
+                gameServer.SetServer((short)gamePort);
             })).Start();
         }
     }
