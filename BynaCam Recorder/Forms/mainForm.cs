@@ -139,7 +139,6 @@ namespace BynaCam_Recorder
                     ErrMsg("ERROR: Cannot open Tibia client! Wrong version or path doesn't exists!");
                     return;
                 }
-                Constants.Version = client.Version;
 
                 client.Exited += new EventHandler(client_Exited);
                 client.Process.PriorityClass = ProcessPriorityClass.Idle;
@@ -179,7 +178,7 @@ namespace BynaCam_Recorder
             }
         }
 
-        #region aboutBtn / optionsBtn
+        #region About button / Options Button
         private void aboutBtn_Click(object sender, EventArgs e)
         {
             Kernel.AboutForm.ShowInTaskbar = false;
@@ -194,5 +193,31 @@ namespace BynaCam_Recorder
             Kernel.OptionsForm.ShowDialog(new WindowWrapper(this.Handle));
         }
         #endregion
+
+        #region Form1_Shown (auto update)
+
+        private void Form1_Shown(object sender, EventArgs e)
+        {
+            updateForm uForm = new updateForm();
+            uForm.FileDownloaded += new Action(delegate()
+            {
+                MessageBox.Show("BynaCam will run installation file...");
+                Process.Start(Application.StartupPath + "\\update.exe");
+                Exit();
+            });
+            uForm.FileDownloadError += new Action(delegate()
+                {
+                    Thread.Sleep(1000);
+                    uForm.Invoke(new MethodInvoker(delegate()
+                        {
+                            uForm.Close();
+                        }));
+                });
+
+            uForm.Show(this);
+            uForm.UpdateSoftware();
+        }
+        #endregion
+
     }
 }

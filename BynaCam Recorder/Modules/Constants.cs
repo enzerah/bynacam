@@ -8,5 +8,6 @@ namespace BynaCam_Recorder
     public static class Constants
     {
         public static string Version = "8.42";
+        public static uint UintVer = 260;
     }
 }

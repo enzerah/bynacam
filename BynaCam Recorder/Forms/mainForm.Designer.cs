@@ -88,7 +88,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            this.ClientSize = new System.Drawing.Size(292, 126);
+            this.ClientSize = new System.Drawing.Size(290, 119);
             this.Controls.Add(this.startBtn);
             this.Controls.Add(this.optionsBtn);
             this.Controls.Add(this.aboutBtn);
@@ -97,6 +97,7 @@
             this.MaximizeBox = false;
             this.Name = "Form1";
             this.Text = "BynaCam Recorder v2.6";
+            this.Shown += new System.EventHandler(Form1_Shown);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
 

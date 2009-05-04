@@ -56,6 +56,12 @@
     <Compile Include="Forms\aboutForm.Designer.cs">
       <DependentUpon>aboutForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\updateForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\updateForm.Designer.cs">
+      <DependentUpon>updateForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Modules\Constants.cs" />
     <Compile Include="Modules\FileHandler.cs" />
     <Compile Include="Forms\mainForm.cs">
@@ -82,6 +88,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\optionsForm.resx">
       <DependentUpon>optionsForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\updateForm.resx">
+      <DependentUpon>updateForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
